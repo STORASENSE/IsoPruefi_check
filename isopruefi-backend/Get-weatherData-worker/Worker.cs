@@ -75,7 +75,7 @@ public class Worker : BackgroundService
         {
             using var scope = _serviceProvider.CreateScope();
             var coordinateRepo = scope.ServiceProvider.GetRequiredService<ICoordinateRepo>();
-            var influxRepo = scope.ServiceProvider.GetRequiredService<ITimeDataRepo>();
+            var timeDataRepo = scope.ServiceProvider.GetRequiredService<ITimeDataRepo>();
 
             // Getting the location information for the next unlocked entry.
             var availableLocations = await GetAvailableCoordinateMapping(coordinateRepo);
@@ -99,7 +99,7 @@ public class Worker : BackgroundService
                 // Saving the temperature in the database.
                 try
                 {
-                    await influxRepo.WriteOutsideWeatherData(location, "Meteo", response.Temperature,
+                    await timeDataRepo.WriteOutsideWeatherData(location, "Meteo", response.Temperature,
                         response.Timestamp, availableLocations.PostalCode);
                 }
                 catch (Exception e)
@@ -116,7 +116,7 @@ public class Worker : BackgroundService
                     // Saving the temperature in the database.
                     try
                     {
-                        await influxRepo.WriteOutsideWeatherData(location, "Bright Sky",
+                        await timeDataRepo.WriteOutsideWeatherData(location, "Bright Sky",
                             alternativeResponse.Temperature, alternativeResponse.Timestamp,
                             availableLocations.PostalCode);
                     }
