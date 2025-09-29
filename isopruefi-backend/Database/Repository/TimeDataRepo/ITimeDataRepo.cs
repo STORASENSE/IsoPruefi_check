@@ -1,4 +1,5 @@
-﻿
+
+using Database.EntityFramework.Models;
 
 namespace Database.Repository.TimeDataRepo;
 
@@ -58,6 +59,6 @@ public interface ITimeDataRepo
     ///     Retrieves all times the Arduino was available.
     /// </summary>
     /// <param name="sensor">Sensor name</param>
-    /// <returns>An async enumerable containing all data points.</returns>
-    IAsyncEnumerable<PointDataValues> GetUptime(string sensor);
+    /// <returns>An async enumerable containing all uptime data points.</returns>
+    IAsyncEnumerable<UptimeDataPoint> GetUptime(string sensor);
 }

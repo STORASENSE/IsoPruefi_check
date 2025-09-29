@@ -192,7 +192,7 @@ public class TimeDataRepo : ITimeDataRepo
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<PointDataValues> GetUptime(string sensor)
+    public async IAsyncEnumerable<UptimeDataPoint> GetUptime(string sensor)
     {
         List<UptimeData> uptimeData;
 
@@ -211,10 +211,12 @@ public class TimeDataRepo : ITimeDataRepo
 
         foreach (var item in uptimeData)
         {
-            var pointData = new PointDataValues();
-            pointData.SetField("sensor", item.Sensor);
-            pointData.SetTimestamp(item.DateTime);
-            yield return pointData;
+            yield return new UptimeDataPoint
+            {
+                Sensor = item.Sensor,
+                DateTime = item.DateTime,
+                Timestamp = item.Timestamp
+            };
         }
     }
 }
