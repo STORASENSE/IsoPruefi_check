@@ -4,9 +4,8 @@ using Asp.Versioning;
 using Database.EntityFramework;
 using Database.EntityFramework.Models;
 using Database.Repository.CoordinateRepo;
-using Database.Repository.InfluxRepo;
-using Database.Repository.InfluxRepo.Influx;
 using Database.Repository.SettingsRepo;
+using Database.Repository.TimeDataRepo;
 using Database.Repository.TokenRepo;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -139,7 +138,7 @@ public class Program
 
         // Register Repos
         builder.Services.AddScoped<ITokenRepo, TokenRepo>();
-        builder.Services.AddScoped<IInfluxRepo, InfluxRepo>();
+        builder.Services.AddScoped<ITimeDataRepo, TimeDataRepo>();
         builder.Services.AddScoped<ISettingsRepo, SettingsRepo>();
         builder.Services.AddScoped<ICoordinateRepo, CoordinateRepo>();
 

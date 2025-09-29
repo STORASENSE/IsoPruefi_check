@@ -3,8 +3,8 @@ using System.Numerics;
 using Asp.Versioning;
 using Database.EntityFramework.Enums;
 using Database.Repository.CoordinateRepo;
-using Database.Repository.InfluxRepo;
 using Database.Repository.SettingsRepo;
+using Database.Repository.TimeDataRepo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Rest_API.Models;
@@ -26,21 +26,21 @@ public class TemperatureDataController : ControllerBase
     ///     Repository used to access coordinate data.
     /// </summary>
     private readonly ICoordinateRepo _coordinateRepo;
-    
-    /// <summary>
-    ///     Repository used to store and retrieve temperature data in InfluxDB.
-    /// </summary>
-    private readonly IInfluxRepo _influxRepo;
-    
+
     /// <summary>
     ///     Logger instance used to capture diagnostic and error information.
     /// </summary>
     private readonly ILogger<TemperatureDataController> _logger;
-    
+
     /// <summary>
     ///     Repository used to access application settings.
     /// </summary>
     private readonly ISettingsRepo _settingsRepo;
+
+    /// <summary>
+    ///     Repository used to store and retrieve temperature data in InfluxDB.
+    /// </summary>
+    private readonly ITimeDataRepo _timeDataRepo;
 
 
     /// <summary>
@@ -48,15 +48,15 @@ public class TemperatureDataController : ControllerBase
     /// </summary>
     /// <param name="logger">The logger instance used for logging operations.</param>
     /// <param name="settingsRepo">The repository for accessing application settings.</param>
-    /// <param name="influxRepo">The repository for accessing temperature data from InfluxDB.</param>
+    /// <param name="timeDataRepo">The repository for accessing temperature data from InfluxDB.</param>
     /// <param name="coordinateRepo">The repository for accessing the coordinate info.</param>
     /// <exception cref="ArgumentNullException">Thrown when any of the parameters is null.</exception>
     public TemperatureDataController(ILogger<TemperatureDataController> logger, ISettingsRepo settingsRepo,
-        IInfluxRepo influxRepo, ICoordinateRepo coordinateRepo)
+        ITimeDataRepo timeDataRepo, ICoordinateRepo coordinateRepo)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _settingsRepo = settingsRepo ?? throw new ArgumentNullException(nameof(settingsRepo));
-        _influxRepo = influxRepo ?? throw new ArgumentNullException(nameof(influxRepo));
+        _timeDataRepo = timeDataRepo ?? throw new ArgumentNullException(nameof(timeDataRepo));
         _coordinateRepo = coordinateRepo ?? throw new ArgumentNullException(nameof(coordinateRepo));
     }
 
@@ -174,7 +174,8 @@ public class TemperatureDataController : ControllerBase
 
             var sensorTempData = await GetSensorTemperatureDataAsync(start, end, sensor.SensorName!);
 
-            sensorTempData = CheckPlausibility(sensorTempData, sensor.SensorName!, sensor.SensorLocation!, isFahrenheit);
+            sensorTempData =
+                CheckPlausibility(sensorTempData, sensor.SensorName!, sensor.SensorLocation!, isFahrenheit);
 
             var sensorData = new SensorData
             {
@@ -197,7 +198,7 @@ public class TemperatureDataController : ControllerBase
         return temperatureData;
     }
 
-    
+
     /// <summary>
     ///     Checks the plausibility of a list of temperature sensor readings.
     /// </summary>
@@ -206,7 +207,7 @@ public class TemperatureDataController : ControllerBase
     /// <param name="sensorLocation">The location of the sensor.</param>
     /// <param name="isFahrenheit">Indicates whether the temperature readings are in Fahrenheit.</param>
     /// <returns>
-    ///     A filtered or adjusted list of <see cref="TemperatureData"/> representing plausible readings.
+    ///     A filtered or adjusted list of <see cref="TemperatureData" /> representing plausible readings.
     /// </returns>
     private List<TemperatureData> CheckPlausibility(List<TemperatureData> sensorData, string sensorName,
         string sensorLocation, bool isFahrenheit)
@@ -248,7 +249,7 @@ public class TemperatureDataController : ControllerBase
 
         try
         {
-            await foreach (var row in _influxRepo.GetOutsideWeatherData(start, end, place))
+            await foreach (var row in _timeDataRepo.GetOutsideWeatherData(start, end, place))
             {
                 var temperature = Convert.ToDouble(row[2]);
                 var bigInt = (BigInteger)row[1]!;
@@ -302,7 +303,7 @@ public class TemperatureDataController : ControllerBase
 
         try
         {
-            await foreach (var row in _influxRepo.GetSensorWeatherData(start, end, sensor))
+            await foreach (var row in _timeDataRepo.GetSensorWeatherData(start, end, sensor))
             {
                 var temperature = Convert.ToDouble(row[2]);
                 var bigInt = (BigInteger)row[1]!;

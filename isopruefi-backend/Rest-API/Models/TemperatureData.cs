@@ -25,12 +25,12 @@ public class SensorData
     ///     Gets or sets the name of the sensor.
     /// </summary>
     public string? SensorName { get; set; }
-    
+
     /// <summary>
     ///     Gets or sets the location of the sensor.
     /// </summary>
     public string? Location { get; set; }
-    
+
     /// <summary>
     ///     Gets or sets the temperature data of the sensor.
     /// </summary>

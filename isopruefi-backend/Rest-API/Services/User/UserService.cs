@@ -10,12 +10,12 @@ namespace Rest_API.Services.User;
 public class UserService : IUserService
 {
     /// <summary>
-    ///     Logger instance used to capture diagnostic and error information for the <see cref="UserService"/>.
+    ///     Logger instance used to capture diagnostic and error information for the <see cref="UserService" />.
     /// </summary>
     private readonly ILogger<UserService> _logger;
-    
+
     /// <summary>
-    ///     ASP.NET Core Identity UserManager used to manage <see cref="ApiUser"/> accounts.
+    ///     ASP.NET Core Identity UserManager used to manage <see cref="ApiUser" /> accounts.
     /// </summary>
     private readonly UserManager<ApiUser> _userManager;
 
@@ -62,7 +62,7 @@ public class UserService : IUserService
             throw;
         }
     }
-    
+
     /// <inheritdoc />
     public async Task ChangePassword(ApiUser user, string currentPassword, string newPassword)
     {

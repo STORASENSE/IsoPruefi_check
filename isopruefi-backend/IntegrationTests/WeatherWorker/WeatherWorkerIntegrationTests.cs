@@ -2,7 +2,7 @@ using System.Text.Json;
 using Database.EntityFramework;
 using Database.EntityFramework.Models;
 using Database.Repository.CoordinateRepo;
-using Database.Repository.InfluxRepo;
+using Database.Repository.TimeDataRepo;
 using FluentAssertions;
 using Get_weatherData_worker;
 using IntegrationTests.Infrastructure;
@@ -90,7 +90,7 @@ public class WeatherWorkerIntegrationTests : IntegrationTestBase
     {
         // Arrange
         using var scope = Factory.Services.CreateScope();
-        var influxRepo = scope.ServiceProvider.GetRequiredService<IInfluxRepo>();
+        var influxRepo = scope.ServiceProvider.GetRequiredService<ITimeDataRepo>();
 
         var testLocation = "Test Location";
         var testSource = "Test Source";
@@ -231,7 +231,7 @@ public class WeatherWorkerIntegrationTests : IntegrationTestBase
 
         // Verify all dependencies can be resolved
         var coordinateRepo = scope.ServiceProvider.GetService<ICoordinateRepo>();
-        var influxRepo = scope.ServiceProvider.GetService<IInfluxRepo>();
+        var influxRepo = scope.ServiceProvider.GetService<ITimeDataRepo>();
         var httpClientFactory = scope.ServiceProvider.GetService<IHttpClientFactory>();
 
         // Assert

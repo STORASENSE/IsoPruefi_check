@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Database.Repository.InfluxRepo;
 using Database.Repository.SettingsRepo;
+using Database.Repository.TimeDataRepo;
 using LoadTests.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using MQTT_Receiver_Worker.MQTT.Interfaces;
@@ -143,7 +143,7 @@ public class MqttSensorLoadTest : LoadTestBase
     {
         // Get InfluxDB service from your Database project
         using var scope = MqttFactory.Services.CreateScope();
-        var repo = scope.ServiceProvider.GetRequiredService<IInfluxRepo>();
+        var repo = scope.ServiceProvider.GetRequiredService<ITimeDataRepo>();
 
         foreach (var sensor in _topicSettings!.OrderBy(x => x.SensorName))
         {

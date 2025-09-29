@@ -9,17 +9,17 @@ namespace Get_weatherData_worker.Helper;
 public class CoordinatesHealthCheck : IHealthCheck
 {
     /// <summary>
-    ///     Instance of the service provider for accessing services.
-    /// </summary>
-    private readonly IServiceProvider _serviceProvider;
-    
-    /// <summary>
     ///     Logger instance used to document diagnostics.
     /// </summary>
     private readonly ILogger<CoordinatesHealthCheck> _logger;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="CoordinatesHealthCheck"/> class.
+    ///     Instance of the service provider for accessing services.
+    /// </summary>
+    private readonly IServiceProvider _serviceProvider;
+
+    /// <summary>
+    ///     Initializes a new instance of the <see cref="CoordinatesHealthCheck" /> class.
     /// </summary>
     /// <param name="serviceProvider">Service provider for accessing services.</param>
     /// <param name="logger">Logger for documenting diagnostics.</param>

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Database.EntityFramework.Models;
 using Database.Repository.CoordinateRepo;
-using Database.Repository.InfluxRepo;
+using Database.Repository.TimeDataRepo;
 
 namespace Get_weatherData_worker;
 
@@ -11,37 +11,37 @@ namespace Get_weatherData_worker;
 public class Worker : BackgroundService
 {
     /// <summary>
-    ///     Logger instance for documenting diagnostics.
+    ///     Alternative URL if the first API is unavailable.
     /// </summary>
-    private readonly ILogger<Worker> _logger;
-    
-    /// <summary>
-    ///     HttpClient factory for making API calls.
-    /// </summary>
-    private readonly IHttpClientFactory _httpClientFactory;
-    
-    /// <summary>
-    ///     Service provider for accessing services.
-    /// </summary>
-    private readonly IServiceProvider _serviceProvider;
-    
+    private readonly string _alternativeWeatherDataApi;
+
     /// <summary>
     ///     Configuration for accessing settings.
     /// </summary>
     private readonly IConfiguration _configuration;
 
     /// <summary>
+    ///     HttpClient factory for making API calls.
+    /// </summary>
+    private readonly IHttpClientFactory _httpClientFactory;
+
+    /// <summary>
+    ///     Logger instance for documenting diagnostics.
+    /// </summary>
+    private readonly ILogger<Worker> _logger;
+
+    /// <summary>
+    ///     Service provider for accessing services.
+    /// </summary>
+    private readonly IServiceProvider _serviceProvider;
+
+    /// <summary>
     ///     URL of the API.
     /// </summary>
     private readonly string _weatherDataApi;
-    
-    /// <summary>
-    ///     Alternative URL if the first API is unavailable.
-    /// </summary>
-    private readonly string _alternativeWeatherDataApi;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="Worker"/> class.
+    ///     Initializes a new instance of the <see cref="Worker" /> class.
     /// </summary>
     /// <param name="logger">Logger for recording service events.</param>
     /// <param name="httpClientFactory">Http Client Factory for handling connections for API calls.</param>
@@ -75,7 +75,7 @@ public class Worker : BackgroundService
         {
             using var scope = _serviceProvider.CreateScope();
             var coordinateRepo = scope.ServiceProvider.GetRequiredService<ICoordinateRepo>();
-            var influxRepo = scope.ServiceProvider.GetRequiredService<IInfluxRepo>();
+            var influxRepo = scope.ServiceProvider.GetRequiredService<ITimeDataRepo>();
 
             // Getting the location information for the next unlocked entry.
             var availableLocations = await GetAvailableCoordinateMapping(coordinateRepo);

@@ -12,8 +12,8 @@ public interface IConnection
     ///     Gets a value indicating whether the MQTT client is currently connected.
     /// </summary>
     bool IsConnected { get; }
-    
-    
+
+
     /// <summary>
     ///     Gets or sets a value indicating whether the client is subscribed to the relevant topics.
     /// </summary>

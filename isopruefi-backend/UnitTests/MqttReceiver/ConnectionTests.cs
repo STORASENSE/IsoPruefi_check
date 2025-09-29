@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Database.Repository.InfluxRepo;
+using Database.Repository.TimeDataRepo;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,7 +27,7 @@ public class ConnectionTests
         _mockLogger = new Mock<ILogger<Connection>>();
         _mockServiceProvider = new Mock<IServiceProvider>();
         _mockServiceScope = new Mock<IServiceScope>();
-        _mockInfluxRepo = new Mock<IInfluxRepo>();
+        _mockInfluxRepo = new Mock<ITimeDataRepo>();
 
         // Create a configuration using ConfigurationBuilder instead of mocking extension methods
         var configDict = new Dictionary<string, string>
@@ -41,7 +41,7 @@ public class ConnectionTests
 
         // Setup service provider and scope
         var mockScopeServiceProvider = new Mock<IServiceProvider>();
-        mockScopeServiceProvider.Setup(sp => sp.GetService(typeof(IInfluxRepo)))
+        mockScopeServiceProvider.Setup(sp => sp.GetService(typeof(ITimeDataRepo)))
             .Returns(_mockInfluxRepo.Object);
         _mockServiceScope.Setup(s => s.ServiceProvider).Returns(mockScopeServiceProvider.Object);
 
@@ -58,7 +58,7 @@ public class ConnectionTests
     private Mock<IServiceProvider> _mockServiceProvider;
     private Mock<IServiceScope> _mockServiceScope;
     private IConfiguration _configuration;
-    private Mock<IInfluxRepo> _mockInfluxRepo;
+    private Mock<ITimeDataRepo> _mockInfluxRepo;
     private Connection _connection;
 
     /// <summary>

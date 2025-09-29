@@ -1,7 +1,6 @@
 using Database.EntityFramework;
-using Database.Repository.InfluxRepo;
-using Database.Repository.InfluxRepo.InfluxCache;
 using Database.Repository.SettingsRepo;
+using Database.Repository.TimeDataRepo;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.Hosting;
@@ -108,14 +107,12 @@ public class LoadTestMqttFactory : WebApplicationFactory<Program>
 
             // Register required services for load testing
             services.AddMemoryCache();
-            services.AddScoped<CachedInfluxRepo>();
-            services.AddScoped<IInfluxRepo>(provider => provider.GetRequiredService<CachedInfluxRepo>());
+            services.AddScoped<ITimeDataRepo, TimeDataRepo>();
             services.AddScoped<ISettingsRepo, SettingsRepo>();
             services.AddSingleton<IReceiver, Receiver>();
             services.AddSingleton<IConnection, Connection>();
 
             services.AddHostedService<Worker>();
-            services.AddHostedService<InfluxRetryService>();
         });
 
         // Disable HTTPS redirection for load tests

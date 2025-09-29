@@ -1,8 +1,8 @@
 using Database.EntityFramework.Enums;
 using Database.EntityFramework.Models;
 using Database.Repository.CoordinateRepo;
-using Database.Repository.InfluxRepo;
 using Database.Repository.SettingsRepo;
+using Database.Repository.TimeDataRepo;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -28,7 +28,7 @@ public class TemperatureDataControllerTests
     {
         _mockLogger = new Mock<ILogger<TemperatureDataController>>();
         _mockSettingsRepo = new Mock<ISettingsRepo>();
-        _mockInfluxRepo = new Mock<IInfluxRepo>();
+        _mockInfluxRepo = new Mock<ITimeDataRepo>();
         _mockCoordinateRepo = new Mock<ICoordinateRepo>();
 
         _controller = new TemperatureDataController(
@@ -48,7 +48,7 @@ public class TemperatureDataControllerTests
 
     private Mock<ILogger<TemperatureDataController>> _mockLogger;
     private Mock<ISettingsRepo> _mockSettingsRepo;
-    private Mock<IInfluxRepo> _mockInfluxRepo;
+    private Mock<ITimeDataRepo> _mockInfluxRepo;
     private Mock<ICoordinateRepo> _mockCoordinateRepo;
     private TemperatureDataController _controller;
     private IAsyncEnumerable<object?[]> _influxReturnData;
@@ -115,7 +115,7 @@ public class TemperatureDataControllerTests
             null!,
             _mockCoordinateRepo.Object);
 
-        act.Should().Throw<ArgumentNullException>().WithMessage("*influxRepo*");
+        act.Should().Throw<ArgumentNullException>().WithMessage("*timeDataRepo*");
     }
 
     /// <summary>

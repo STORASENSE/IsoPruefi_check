@@ -46,7 +46,7 @@ public class SettingsRepo : ISettingsRepo
         _applicationDbContext.TopicSettings.Add(topicSetting);
         return await _applicationDbContext.SaveChangesAsync();
     }
-    
+
     /// <inheritdoc />
     public async Task<int> RemoveTopicSettingAsync(TopicSetting topicSetting)
     {

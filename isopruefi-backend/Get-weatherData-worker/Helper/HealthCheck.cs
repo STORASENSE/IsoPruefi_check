@@ -1,4 +1,3 @@
-using Database.Repository.InfluxRepo.Influx;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -29,9 +28,6 @@ public static class HealthCheck
                 new[] { "WeatherAPI", "External" })
             .AddCheck<CoordinatesHealthCheck>("Coordinates Database",
                 HealthStatus.Unhealthy,
-                new[] { "Coordinates", "External" })
-            .AddCheck<InfluxHealthCheck>("InfluxDB",
-                HealthStatus.Unhealthy,
-                new[] { "Database" });
+                new[] { "Coordinates", "External" });
     }
 }

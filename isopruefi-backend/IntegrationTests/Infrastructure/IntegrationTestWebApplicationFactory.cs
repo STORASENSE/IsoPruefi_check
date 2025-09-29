@@ -1,8 +1,7 @@
 using Database.EntityFramework;
 using Database.Repository.CoordinateRepo;
-using Database.Repository.InfluxRepo;
-using Database.Repository.InfluxRepo.InfluxCache;
 using Database.Repository.SettingsRepo;
+using Database.Repository.TimeDataRepo;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -66,9 +65,7 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
             services.Configure<LoggerFilterOptions>(options => { options.MinLevel = LogLevel.Warning; });
 
             // Register MQTT-related services for testing
-            services.AddMemoryCache();
-            services.AddScoped<CachedInfluxRepo>();
-            services.AddScoped<IInfluxRepo>(provider => provider.GetRequiredService<CachedInfluxRepo>());
+            services.AddScoped<ITimeDataRepo, TimeDataRepo>();
             services.AddScoped<ISettingsRepo, SettingsRepo>();
             services.AddSingleton<IReceiver, Receiver>();
             services.AddSingleton<IConnection, Connection>();

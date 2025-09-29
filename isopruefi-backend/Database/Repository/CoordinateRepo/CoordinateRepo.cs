@@ -36,7 +36,7 @@ public class CoordinateRepo : ICoordinateRepo
         var entry = await _applicationDbContext.CoordinateMappings.AnyAsync(c => c.PostalCode == postalcode);
         return entry;
     }
-    
+
     /// <inheritdoc />
     public async Task UpdateTime(int postalCode, DateTime newTime)
     {
@@ -55,7 +55,7 @@ public class CoordinateRepo : ICoordinateRepo
 
         return result;
     }
-    
+
     /// <inheritdoc />
     public async Task<CoordinateMapping?> GetLocation()
     {
@@ -65,7 +65,7 @@ public class CoordinateRepo : ICoordinateRepo
 
         return result;
     }
-    
+
     /// <inheritdoc />
     public async Task<CoordinateMapping?> GetLocation(string place)
     {
@@ -96,7 +96,7 @@ public class CoordinateRepo : ICoordinateRepo
         await transaction.CommitAsync();
         return null;
     }
-    
+
     /// <inheritdoc />
     public async Task DeletePostalCode(int postalcode)
     {

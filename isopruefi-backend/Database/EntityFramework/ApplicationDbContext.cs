@@ -90,7 +90,7 @@ public class ApplicationDbContext : IdentityDbContext<ApiUser>
             b.Property(s => s.Id)
                 .ValueGeneratedOnAdd()
                 .UseIdentityColumn();
-            
+
             b.HasIndex(s => new { s.Sensor, s.DateTime });
             b.HasIndex(s => s.DateTime);
         });
@@ -101,7 +101,7 @@ public class ApplicationDbContext : IdentityDbContext<ApiUser>
             b.Property(o => o.Id)
                 .ValueGeneratedOnAdd()
                 .UseIdentityColumn();
-            
+
             b.HasIndex(o => new { o.Place, o.Timestamp });
             b.HasIndex(o => o.Timestamp);
         });
@@ -112,7 +112,7 @@ public class ApplicationDbContext : IdentityDbContext<ApiUser>
             b.Property(u => u.Id)
                 .ValueGeneratedOnAdd()
                 .UseIdentityColumn();
-            
+
             b.HasIndex(u => new { u.Sensor, u.DateTime });
             b.HasIndex(u => u.DateTime);
         });

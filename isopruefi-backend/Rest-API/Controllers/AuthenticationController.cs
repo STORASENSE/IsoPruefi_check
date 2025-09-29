@@ -23,7 +23,7 @@ public class AuthenticationController(
     ///     The authentication service used to perform user authentication operations.
     /// </summary>
     private readonly IAuthenticationService _authenticationService = authenticationService;
-    
+
     /// <summary>
     ///     Logger instance used to capture diagnostic and error information.
     /// </summary>

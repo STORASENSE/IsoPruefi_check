@@ -1,30 +1,30 @@
 using Database.EntityFramework;
 using Database.EntityFramework.Models;
-using InfluxDB3.Client.Write;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Database.Repository.InfluxRepo.Influx;
+namespace Database.Repository.TimeDataRepo;
 
 /// <inheritdoc />
-public class InfluxRepo : IInfluxRepo
+public class TimeDataRepo : ITimeDataRepo
 {
     /// <summary>
     ///     Database context for accessing PostgreSQL.
     /// </summary>
     private readonly ApplicationDbContext _context;
-    
+
     /// <summary>
     ///     The logger instance used to record diagnostic information.
     /// </summary>
-    private readonly ILogger<InfluxRepo> _logger;
-    
+    private readonly ILogger<TimeDataRepo> _logger;
+
     /// <summary>
-    ///     Constructor for the InfluxRepo class.
+    ///     Constructor for the TimeDataRepo class.
     /// </summary>
     /// <param name="context">Database context for PostgreSQL operations.</param>
     /// <param name="logger">Logger instance for capturing diagnostics.</param>
-    public InfluxRepo(ApplicationDbContext context, ILogger<InfluxRepo> logger)
+    public TimeDataRepo(ApplicationDbContext context, ILogger<TimeDataRepo> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -115,7 +115,7 @@ public class InfluxRepo : IInfluxRepo
     {
         var timespan = end - start;
         List<OutsideWeatherData> data;
-        
+
         try
         {
             var query = _context.OutsideWeatherData
@@ -133,34 +133,30 @@ public class InfluxRepo : IInfluxRepo
         IEnumerable<object?[]> grouped;
 
         if (timespan.TotalHours < 24)
-        {
             grouped = data
-                .GroupBy(x => new DateTime(x.Timestamp.Year, x.Timestamp.Month, x.Timestamp.Day, x.Timestamp.Hour, x.Timestamp.Minute, 0))
+                .GroupBy(x => new DateTime(x.Timestamp.Year, x.Timestamp.Month, x.Timestamp.Day, x.Timestamp.Hour,
+                    x.Timestamp.Minute, 0))
                 .Select(g => new object?[] { g.Key, g.Average(x => x.Temperature) });
-        }
         else if (timespan.TotalDays < 30)
-        {
             grouped = data
-                .GroupBy(x => new DateTime(x.Timestamp.Year, x.Timestamp.Month, x.Timestamp.Day, x.Timestamp.Hour, 0, 0))
+                .GroupBy(x =>
+                    new DateTime(x.Timestamp.Year, x.Timestamp.Month, x.Timestamp.Day, x.Timestamp.Hour, 0, 0))
                 .Select(g => new object?[] { g.Key, g.Average(x => x.Temperature) });
-        }
         else
-        {
             grouped = data
                 .GroupBy(x => new DateTime(x.Timestamp.Year, x.Timestamp.Month, x.Timestamp.Day))
                 .Select(g => new object?[] { g.Key, g.Average(x => x.Temperature) });
-        }
 
         foreach (var item in grouped)
             yield return item;
     }
-    
+
     /// <inheritdoc />
     public async IAsyncEnumerable<object?[]> GetSensorWeatherData(DateTime start, DateTime end, string sensor)
     {
         var timespan = end - start;
         List<SensorData> data;
-        
+
         try
         {
             var query = _context.SensorData
@@ -178,23 +174,18 @@ public class InfluxRepo : IInfluxRepo
         IEnumerable<object?[]> grouped;
 
         if (timespan.TotalHours < 24)
-        {
             grouped = data
-                .GroupBy(x => new DateTime(x.DateTime.Year, x.DateTime.Month, x.DateTime.Day, x.DateTime.Hour, x.DateTime.Minute, 0))
+                .GroupBy(x => new DateTime(x.DateTime.Year, x.DateTime.Month, x.DateTime.Day, x.DateTime.Hour,
+                    x.DateTime.Minute, 0))
                 .Select(g => new object?[] { g.Key, g.Average(x => x.Value) });
-        }
         else if (timespan.TotalDays < 30)
-        {
             grouped = data
                 .GroupBy(x => new DateTime(x.DateTime.Year, x.DateTime.Month, x.DateTime.Day, x.DateTime.Hour, 0, 0))
                 .Select(g => new object?[] { g.Key, g.Average(x => x.Value) });
-        }
         else
-        {
             grouped = data
                 .GroupBy(x => new DateTime(x.DateTime.Year, x.DateTime.Month, x.DateTime.Day))
                 .Select(g => new object?[] { g.Key, g.Average(x => x.Value) });
-        }
 
         foreach (var item in grouped)
             yield return item;
@@ -204,7 +195,7 @@ public class InfluxRepo : IInfluxRepo
     public async IAsyncEnumerable<PointDataValues> GetUptime(string sensor)
     {
         List<UptimeData> uptimeData;
-        
+
         try
         {
             uptimeData = await _context.UptimeData

@@ -16,24 +16,24 @@ public class TempService : ITempService
     ///     Application configuration used to retrieve settings such as API keys or URLs.
     /// </summary>
     private readonly IConfiguration _configuration;
-    
+
     /// <summary>
     ///     Repository used to access coordinate data and mappings.
     /// </summary>
     private readonly ICoordinateRepo _coordinateRepo;
-    
+
     /// <summary>
     ///     The base URL or API key for the geocoding service used in this service.
     /// </summary>
     private readonly string _geocodingApi;
-    
+
     /// <summary>
-    ///     Factory used to create <see cref="HttpClient"/> instances for making HTTP requests.
+    ///     Factory used to create <see cref="HttpClient" /> instances for making HTTP requests.
     /// </summary>
     private readonly IHttpClientFactory _httpClientFactory;
-    
+
     /// <summary>
-    ///     Logger instance used to capture diagnostic and error information for the <see cref="TempService"/>.
+    ///     Logger instance used to capture diagnostic and error information for the <see cref="TempService" />.
     /// </summary>
     private readonly ILogger<TempService> _logger;
 
@@ -157,7 +157,7 @@ public class TempService : ITempService
     }
 
     /// <summary>
-    /// Calls an API to retrieve coordinates for a location.
+    ///     Calls an API to retrieve coordinates for a location.
     /// </summary>
     /// <param name="postalCode">Postalcode.</param>
     /// <returns>The API response message.</returns>
