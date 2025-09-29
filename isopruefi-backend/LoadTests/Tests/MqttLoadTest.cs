@@ -101,7 +101,7 @@ public class MqttSensorLoadTest : LoadTestBase
             $"MQTT recovery publishing success rate should be > 90%, but was {successRate:F1}%");
 
         var end = DateTime.UtcNow;
-        await VerifyInfluxDBData(start, end);
+        await VerifyPostgreSQLData(start, end);
     }
 
     /// <summary>
@@ -135,13 +135,13 @@ public class MqttSensorLoadTest : LoadTestBase
     }
 
     /// <summary>
-    ///     Verifies that MQTT data was successfully written to InfluxDB
+    ///     Verifies that MQTT data was successfully written to PostgreSQL
     /// </summary>
     /// <param name="start">Start time for data verification</param>
     /// <param name="end">End time for data verification</param>
-    private async Task VerifyInfluxDBData(DateTime start, DateTime end)
+    private async Task VerifyPostgreSQLData(DateTime start, DateTime end)
     {
-        // Get InfluxDB service from your Database project
+        // Get PostgreSQL service from your Database project
         using var scope = MqttFactory.Services.CreateScope();
         var repo = scope.ServiceProvider.GetRequiredService<ITimeDataRepo>();
 
@@ -151,7 +151,7 @@ public class MqttSensorLoadTest : LoadTestBase
             await foreach (var row in repo.GetSensorWeatherData(start, end, sensor.SensorName!)) recordCount++;
 
             Assert.That(recordCount, Is.GreaterThan(0),
-                $"Expected more than 0 records in InfluxDB but found {recordCount} - Sensor: {sensor.SensorName}");
+                $"Expected more than 0 records in PostgreSQL but found {recordCount} - Sensor: {sensor.SensorName}");
         }
     }
 }

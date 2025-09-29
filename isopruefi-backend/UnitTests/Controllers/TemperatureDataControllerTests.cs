@@ -28,16 +28,16 @@ public class TemperatureDataControllerTests
     {
         _mockLogger = new Mock<ILogger<TemperatureDataController>>();
         _mockSettingsRepo = new Mock<ISettingsRepo>();
-        _mockInfluxRepo = new Mock<ITimeDataRepo>();
+        _mockTimeDataRepo = new Mock<ITimeDataRepo>();
         _mockCoordinateRepo = new Mock<ICoordinateRepo>();
 
         _controller = new TemperatureDataController(
             _mockLogger.Object,
             _mockSettingsRepo.Object,
-            _mockInfluxRepo.Object,
+            _mockTimeDataRepo.Object,
             _mockCoordinateRepo.Object);
 
-        _influxReturnData = GetData();
+        _timeDataReturnData = GetData();
 
         static async IAsyncEnumerable<object?[]> GetData()
         {
@@ -48,10 +48,10 @@ public class TemperatureDataControllerTests
 
     private Mock<ILogger<TemperatureDataController>> _mockLogger;
     private Mock<ISettingsRepo> _mockSettingsRepo;
-    private Mock<ITimeDataRepo> _mockInfluxRepo;
+    private Mock<ITimeDataRepo> _mockTimeDataRepo;
     private Mock<ICoordinateRepo> _mockCoordinateRepo;
     private TemperatureDataController _controller;
-    private IAsyncEnumerable<object?[]> _influxReturnData;
+    private IAsyncEnumerable<object?[]> _timeDataReturnData;
 
     /// <summary>
     ///     Tests that the constructor creates a valid instance when provided with valid parameters.
@@ -63,7 +63,7 @@ public class TemperatureDataControllerTests
         Action act = () => new TemperatureDataController(
             _mockLogger.Object,
             _mockSettingsRepo.Object,
-            _mockInfluxRepo.Object,
+            _mockTimeDataRepo.Object,
             _mockCoordinateRepo.Object);
 
         // Assert
@@ -80,7 +80,7 @@ public class TemperatureDataControllerTests
         Action act = () => new TemperatureDataController(
             null!,
             _mockSettingsRepo.Object,
-            _mockInfluxRepo.Object,
+            _mockTimeDataRepo.Object,
             _mockCoordinateRepo.Object);
 
         act.Should().Throw<ArgumentNullException>().WithMessage("*logger*");
@@ -96,17 +96,17 @@ public class TemperatureDataControllerTests
         Action act = () => new TemperatureDataController(
             _mockLogger.Object,
             null!,
-            _mockInfluxRepo.Object,
+            _mockTimeDataRepo.Object,
             _mockCoordinateRepo.Object);
 
         act.Should().Throw<ArgumentNullException>().WithMessage("*settingsRepo*");
     }
 
     /// <summary>
-    ///     Tests that the constructor throws ArgumentNullException when InfluxDB repository parameter is null.
+    ///     Tests that the constructor throws ArgumentNullException when TimeDataRepo repository parameter is null.
     /// </summary>
     [Test]
-    public void Constructor_WithNullInfluxRepo_ShouldThrowArgumentNullException()
+    public void Constructor_WithNullTimeDataRepo_ShouldThrowArgumentNullException()
     {
         // Act & Assert
         Action act = () => new TemperatureDataController(
@@ -128,7 +128,7 @@ public class TemperatureDataControllerTests
         Action act = () => new TemperatureDataController(
             _mockLogger.Object,
             _mockSettingsRepo.Object,
-            _mockInfluxRepo.Object,
+            _mockTimeDataRepo.Object,
             null!);
 
         act.Should().Throw<ArgumentNullException>().WithMessage("*coordinateRepo*");
@@ -156,12 +156,12 @@ public class TemperatureDataControllerTests
         _mockCoordinateRepo.Setup(x => x.GetLocation(place)).ReturnsAsync(location);
         _mockSettingsRepo.Setup(x => x.GetTopicSettingsAsync(location.PostalCode, SensorType.temp))
             .ReturnsAsync(topicSettings);
-        _mockInfluxRepo.Setup(x => x.GetOutsideWeatherData(start, end, place))
-            .Returns(_influxReturnData);
-        _mockInfluxRepo.Setup(x => x.GetSensorWeatherData(start, end, topicSettings[0].SensorName!))
-            .Returns(_influxReturnData);
-        _mockInfluxRepo.Setup(x => x.GetSensorWeatherData(start, end, topicSettings[1].SensorName!))
-            .Returns(_influxReturnData);
+        _mockTimeDataRepo.Setup(x => x.GetOutsideWeatherData(start, end, place))
+            .Returns(_timeDataReturnData);
+        _mockTimeDataRepo.Setup(x => x.GetSensorWeatherData(start, end, topicSettings[0].SensorName!))
+            .Returns(_timeDataReturnData);
+        _mockTimeDataRepo.Setup(x => x.GetSensorWeatherData(start, end, topicSettings[1].SensorName!))
+            .Returns(_timeDataReturnData);
 
         // Act
         var result = await _controller.GetTemperature(start, end, place, isFahrenheit);
@@ -198,10 +198,10 @@ public class TemperatureDataControllerTests
         _mockCoordinateRepo.Setup(x => x.GetLocation(place)).ReturnsAsync(location);
         _mockSettingsRepo.Setup(x => x.GetTopicSettingsAsync(location.PostalCode, SensorType.temp))
             .ReturnsAsync(topicSettings);
-        _mockInfluxRepo.Setup(x => x.GetOutsideWeatherData(start, end, place))
-            .Returns(_influxReturnData);
-        _mockInfluxRepo.Setup(x => x.GetSensorWeatherData(start, end, topicSettings[0].SensorName!))
-            .Returns(_influxReturnData);
+        _mockTimeDataRepo.Setup(x => x.GetOutsideWeatherData(start, end, place))
+            .Returns(_timeDataReturnData);
+        _mockTimeDataRepo.Setup(x => x.GetSensorWeatherData(start, end, topicSettings[0].SensorName!))
+            .Returns(_timeDataReturnData);
 
         // Act
         var result = await _controller.GetTemperature(start, end, place, isFahrenheit);
@@ -233,8 +233,8 @@ public class TemperatureDataControllerTests
         _mockCoordinateRepo.Setup(x => x.GetLocation(place)).ReturnsAsync(location);
         _mockSettingsRepo.Setup(x => x.GetTopicSettingsAsync(location.PostalCode, SensorType.temp))
             .ReturnsAsync(new List<TopicSetting>());
-        _mockInfluxRepo.Setup(x => x.GetOutsideWeatherData(start, end, place))
-            .Returns(_influxReturnData);
+        _mockTimeDataRepo.Setup(x => x.GetOutsideWeatherData(start, end, place))
+            .Returns(_timeDataReturnData);
 
         // Act
         var result = await _controller.GetTemperature(start, end, place);
