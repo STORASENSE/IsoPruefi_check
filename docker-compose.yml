@@ -42,38 +42,6 @@ services:
       retries: 3
       start_period: 40s
 
-  influxdb3:
-    image: influxdb:3.2.1-core
-    container_name: influxdb
-    restart: unless-stopped
-    ports:
-      - 8181:8181
-    command:
-      - influxdb3
-      - serve
-      - --node-id=node0
-      - --object-store=file
-      - --data-dir=/var/lib/influxdb3/data
-      - --plugin-dir=/var/lib/influxdb3/plugins
-    volumes:
-      - type: bind
-        source: ./isopruefi-docker/influx/influxdb3/data
-        # Path to store data in the container
-        target: /var/lib/influxdb3/data
-      - type: bind
-        # Path to store plugins on your host system
-        source: ./isopruefi-docker/influx/influxdb3/plugins
-        # Path to store plugins in the container
-        target: /var/lib/influxdb3/plugins
-      # - ./influx/bootstrap.sh:/docker-entrypoint-initdb.d/bootstrap.sh:ro
-    networks:
-      - isopruefi-network
-    healthcheck:
-      test: ["CMD", "curl", "http://localhost:8181/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
  
   postgres-1:
@@ -206,7 +174,7 @@ services:
     depends_on:
       - loki
       - alloy
-      - influxdb3
+
 
   isopruefi-frontend-1:
     build:
@@ -247,7 +215,6 @@ services:
     env_file:
       - ./secrets.env
     depends_on:
-      - influxdb3
       - pgpool
 
   isopruefi-mqtt-receiver-1:
@@ -262,7 +229,6 @@ services:
     env_file:
       - ./secrets.env
     depends_on:
-      - influxdb3
       - pgpool
 
   isopruefi-get-weather-worker-1:
@@ -280,7 +246,6 @@ services:
     env_file:
       - ./secrets.env
     depends_on:
-      - influxdb3
       - pgpool
 
 volumes:
