@@ -29,6 +29,21 @@ public class ApplicationDbContext : IdentityDbContext<ApiUser>
     /// </summary>
     public DbSet<CoordinateMapping> CoordinateMappings { get; set; }
 
+    /// <summary>
+    ///     Represents the collection of SensorData entities in the database.
+    /// </summary>
+    public DbSet<SensorData> SensorData { get; set; }
+
+    /// <summary>
+    ///     Represents the collection of OutsideWeatherData entities in the database.
+    /// </summary>
+    public DbSet<OutsideWeatherData> OutsideWeatherData { get; set; }
+
+    /// <summary>
+    ///     Represents the collection of UptimeData entities in the database.
+    /// </summary>
+    public DbSet<UptimeData> UptimeData { get; set; }
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -67,6 +82,39 @@ public class ApplicationDbContext : IdentityDbContext<ApiUser>
                     PostalCode = 89518, Latitude = 48.6852, Longitude = 10.1287, Location = "Heidenheim an der Brenz"
                 }
             );
+        });
+
+        modelBuilder.Entity<SensorData>(b =>
+        {
+            b.HasKey(s => s.Id);
+            b.Property(s => s.Id)
+                .ValueGeneratedOnAdd()
+                .UseIdentityColumn();
+            
+            b.HasIndex(s => new { s.Sensor, s.DateTime });
+            b.HasIndex(s => s.DateTime);
+        });
+
+        modelBuilder.Entity<OutsideWeatherData>(b =>
+        {
+            b.HasKey(o => o.Id);
+            b.Property(o => o.Id)
+                .ValueGeneratedOnAdd()
+                .UseIdentityColumn();
+            
+            b.HasIndex(o => new { o.Place, o.Timestamp });
+            b.HasIndex(o => o.Timestamp);
+        });
+
+        modelBuilder.Entity<UptimeData>(b =>
+        {
+            b.HasKey(u => u.Id);
+            b.Property(u => u.Id)
+                .ValueGeneratedOnAdd()
+                .UseIdentityColumn();
+            
+            b.HasIndex(u => new { u.Sensor, u.DateTime });
+            b.HasIndex(u => u.DateTime);
         });
     }
 

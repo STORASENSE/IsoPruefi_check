@@ -1,7 +1,7 @@
-using InfluxDB3.Client;
-using InfluxDB3.Client.Query;
+using Database.EntityFramework;
+using Database.EntityFramework.Models;
 using InfluxDB3.Client.Write;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Database.Repository.InfluxRepo.Influx;
@@ -10,9 +10,9 @@ namespace Database.Repository.InfluxRepo.Influx;
 public class InfluxRepo : IInfluxRepo
 {
     /// <summary>
-    ///     InfluxDb client for communicating with the server.
+    ///     Database context for accessing PostgreSQL.
     /// </summary>
-    private readonly InfluxDBClient _client;
+    private readonly ApplicationDbContext _context;
     
     /// <summary>
     ///     The logger instance used to record diagnostic information.
@@ -22,38 +22,40 @@ public class InfluxRepo : IInfluxRepo
     /// <summary>
     ///     Constructor for the InfluxRepo class.
     /// </summary>
-    /// <param name="configuration">Configuration used to retrieve the settings.</param>
+    /// <param name="context">Database context for PostgreSQL operations.</param>
     /// <param name="logger">Logger instance for capturing diagnostics.</param>
-    /// <exception cref="ArgumentException">Thrown when the configurations are missing.</exception>
-    public InfluxRepo(IConfiguration configuration, ILogger<InfluxRepo> logger)
+    public InfluxRepo(ApplicationDbContext context, ILogger<InfluxRepo> logger)
     {
+        _context = context ?? throw new ArgumentNullException(nameof(context));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-        var database = configuration["Influx:InfluxDBDatabase"] ?? "IsoPruefi";
-
-        var token = configuration["Influx:InfluxDBToken"] ?? configuration["Influx_InfluxDBToken"];
-        var host = configuration["Influx:InfluxDBHost"] ?? configuration["Influx_InfluxDBHost"];
-
-        if (string.IsNullOrEmpty(token)) throw new ArgumentException("InfluxDB token is not configured.");
-
-        if (string.IsNullOrEmpty(host)) throw new ArgumentException("InfluxDB host is not configured.");
-
-        _client = new InfluxDBClient(host, token, database: database);
     }
 
     /// <inheritdoc />
     public async Task WriteSensorData(double measurement, string sensor, long timestamp, int sequence)
     {
-        var dateTimeUtc = DateTimeOffset
-            .FromUnixTimeSeconds(timestamp)
-            .UtcDateTime;
+        try
+        {
+            var dateTimeUtc = DateTimeOffset
+                .FromUnixTimeSeconds(timestamp)
+                .UtcDateTime;
 
-        var point = PointData.Measurement("temperature")
-            .SetTag("sensor", sensor)
-            .SetTag("sequence", sequence.ToString())
-            .SetField("value", measurement)
-            .SetTimestamp(dateTimeUtc);
-        await _client.WritePointAsync(point);
+            var sensorData = new SensorData
+            {
+                Value = measurement,
+                Sensor = sensor,
+                Timestamp = timestamp,
+                DateTime = dateTimeUtc,
+                Sequence = sequence
+            };
+
+            _context.SensorData.Add(sensorData);
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error writing sensor data to PostgreSQL");
+            throw;
+        }
     }
 
     /// <inheritdoc />
@@ -62,19 +64,22 @@ public class InfluxRepo : IInfluxRepo
     {
         try
         {
-            var point = PointData.Measurement("outside_temperature")
-                .SetTag("place", place)
-                .SetTag("website", website)
-                .SetDoubleField("value", temperature)
-                .SetDoubleField("value_fahrenheit", temperature * 9 / 5 + 32)
-                .SetIntegerField("postalcode", postalcode)
-                .SetTimestamp(timestamp);
+            var outsideWeatherData = new OutsideWeatherData
+            {
+                Place = place,
+                Website = website,
+                Temperature = temperature,
+                TemperatureFahrenheit = temperature * 9 / 5 + 32,
+                Timestamp = timestamp,
+                PostalCode = postalcode
+            };
 
-            await _client.WritePointAsync(point);
+            _context.OutsideWeatherData.Add(outsideWeatherData);
+            await _context.SaveChangesAsync();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error writing outside weather data to InfluxDB");
+            _logger.LogError(e, "Error writing outside weather data to PostgreSQL");
             throw;
         }
     }
@@ -88,15 +93,19 @@ public class InfluxRepo : IInfluxRepo
                 .FromUnixTimeSeconds(timestamp)
                 .UtcDateTime;
 
-            var point = PointData.Measurement("uptime")
-                .SetField("sensor", sensor)
-                .SetTimestamp(dateTimeUtc);
+            var uptimeData = new UptimeData
+            {
+                Sensor = sensor,
+                Timestamp = timestamp,
+                DateTime = dateTimeUtc
+            };
 
-            await _client.WritePointAsync(point);
+            _context.UptimeData.Add(uptimeData);
+            await _context.SaveChangesAsync();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error writing uptime into InfluxDB");
+            _logger.LogError(e, "Error writing uptime data to PostgreSQL");
             throw;
         }
     }
@@ -105,92 +114,116 @@ public class InfluxRepo : IInfluxRepo
     public async IAsyncEnumerable<object?[]> GetOutsideWeatherData(DateTime start, DateTime end, string place)
     {
         var timespan = end - start;
-        string query;
-        IAsyncEnumerable<object?[]> result;
-
-        string group;
-        if (timespan.TotalHours < 24) group = "1m";
-        else if (timespan.TotalDays < 30) group = "1h";
-        else group = "1d";
-
-        var bucket = TimeSpan.FromDays(2);
-        var bucketStart = start;
-        while (bucketStart < end)
+        List<OutsideWeatherData> data;
+        
+        try
         {
-            var bucketEnd = bucketStart + bucket;
-            if (bucketEnd > end) bucketEnd = end;
+            var query = _context.OutsideWeatherData
+                .Where(x => x.Place == place && x.Timestamp >= start && x.Timestamp <= end)
+                .OrderBy(x => x.Timestamp);
 
-            query =
-                $"SELECT MEAN(value) FROM outside_temperature where place='{place}' AND time >= '{bucketStart:yyyy-MM-dd HH:mm:ss}' AND time <= '{bucketEnd:yyyy-MM-dd HH:mm:ss}' GROUP BY time({group}) fill(none)";
-
-            try
-            {
-                result = _client.Query(query, QueryType.InfluxQL);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Error retrieving outside weather data from InfluxDB");
-                throw;
-            }
-
-            await foreach (var row in result) yield return row;
-
-            bucketStart = bucketEnd;
+            data = await query.ToListAsync();
         }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error retrieving outside weather data from PostgreSQL");
+            throw;
+        }
+
+        IEnumerable<object?[]> grouped;
+
+        if (timespan.TotalHours < 24)
+        {
+            grouped = data
+                .GroupBy(x => new DateTime(x.Timestamp.Year, x.Timestamp.Month, x.Timestamp.Day, x.Timestamp.Hour, x.Timestamp.Minute, 0))
+                .Select(g => new object?[] { g.Key, g.Average(x => x.Temperature) });
+        }
+        else if (timespan.TotalDays < 30)
+        {
+            grouped = data
+                .GroupBy(x => new DateTime(x.Timestamp.Year, x.Timestamp.Month, x.Timestamp.Day, x.Timestamp.Hour, 0, 0))
+                .Select(g => new object?[] { g.Key, g.Average(x => x.Temperature) });
+        }
+        else
+        {
+            grouped = data
+                .GroupBy(x => new DateTime(x.Timestamp.Year, x.Timestamp.Month, x.Timestamp.Day))
+                .Select(g => new object?[] { g.Key, g.Average(x => x.Temperature) });
+        }
+
+        foreach (var item in grouped)
+            yield return item;
     }
     
     /// <inheritdoc />
     public async IAsyncEnumerable<object?[]> GetSensorWeatherData(DateTime start, DateTime end, string sensor)
     {
         var timespan = end - start;
-        string query;
-        IAsyncEnumerable<object?[]> result;
-
-        string group;
-        if (timespan.TotalHours < 24) group = "1m";
-        else if (timespan.TotalDays < 30) group = "1h";
-        else group = "1d";
-
-        var bucket = TimeSpan.FromDays(2);
-        var bucketStart = start;
-        while (bucketStart < end)
-        {
-            var bucketEnd = bucketStart + bucket;
-            if (bucketEnd > end) bucketEnd = end;
-
-            query =
-                $"SELECT MEAN(value) FROM temperature where sensor='{sensor}' AND time >= '{bucketStart:yyyy-MM-dd HH:mm:ss}' AND time <= '{bucketEnd:yyyy-MM-dd HH:mm:ss}' GROUP BY time({group}) fill(none)";
-
-            try
-            {
-                result = _client.Query(query, QueryType.InfluxQL);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Error retrieving outside weather data from InfluxDB");
-                throw;
-            }
-
-            await foreach (var row in result) yield return row;
-
-            bucketStart = bucketEnd;
-        }
-    }
-
-    /// <inheritdoc />
-    public IAsyncEnumerable<PointDataValues> GetUptime(string sensor)
-    {
+        List<SensorData> data;
+        
         try
         {
-            var query =
-                $"SELECT sensor, time FROM uptime WHERE sensor = '{sensor}'";
+            var query = _context.SensorData
+                .Where(x => x.Sensor == sensor && x.DateTime >= start && x.DateTime <= end)
+                .OrderBy(x => x.DateTime);
 
-            return _client.QueryPoints(query);
+            data = await query.ToListAsync();
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error retrieving outside weather data from InfluxDB");
+            _logger.LogError(e, "Error retrieving sensor weather data from PostgreSQL");
             throw;
+        }
+
+        IEnumerable<object?[]> grouped;
+
+        if (timespan.TotalHours < 24)
+        {
+            grouped = data
+                .GroupBy(x => new DateTime(x.DateTime.Year, x.DateTime.Month, x.DateTime.Day, x.DateTime.Hour, x.DateTime.Minute, 0))
+                .Select(g => new object?[] { g.Key, g.Average(x => x.Value) });
+        }
+        else if (timespan.TotalDays < 30)
+        {
+            grouped = data
+                .GroupBy(x => new DateTime(x.DateTime.Year, x.DateTime.Month, x.DateTime.Day, x.DateTime.Hour, 0, 0))
+                .Select(g => new object?[] { g.Key, g.Average(x => x.Value) });
+        }
+        else
+        {
+            grouped = data
+                .GroupBy(x => new DateTime(x.DateTime.Year, x.DateTime.Month, x.DateTime.Day))
+                .Select(g => new object?[] { g.Key, g.Average(x => x.Value) });
+        }
+
+        foreach (var item in grouped)
+            yield return item;
+    }
+
+    /// <inheritdoc />
+    public async IAsyncEnumerable<PointDataValues> GetUptime(string sensor)
+    {
+        List<UptimeData> uptimeData;
+        
+        try
+        {
+            uptimeData = await _context.UptimeData
+                .Where(x => x.Sensor == sensor)
+                .OrderBy(x => x.DateTime)
+                .ToListAsync();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error retrieving uptime data from PostgreSQL");
+            throw;
+        }
+
+        foreach (var item in uptimeData)
+        {
+            var pointData = new PointDataValues();
+            pointData.SetField("sensor", item.Sensor);
+            pointData.SetTimestamp(item.DateTime);
+            yield return pointData;
         }
     }
 }
