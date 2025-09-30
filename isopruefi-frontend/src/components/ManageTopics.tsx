@@ -175,12 +175,12 @@ export default function ManageTopics() {
 
     return (
         <section className="mt-6">
-            <h3 className="mb-2 text-lg font-semibold text-gray-800">Manage MQTT Topics (admin)</h3>
+            <h3 className="mb-2 text-lg font-semibold text-gray-800 dark:text-[#d3546c]">Manage MQTT Topics (admin)</h3>
 
             {/* Create Form */}
-            <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-end max-w-full mb-3 p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-1 lg:grid-cols-6 gap-2 items-end max-w-full mb-3 p-4 bg-gray-50 dark:bg-neutral-700 rounded-lg">
                 <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Sensor Name</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Sensor Name</label>
                     <input
                         placeholder="Sensor name"
                         value={sensorName}
@@ -190,7 +190,7 @@ export default function ManageTopics() {
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Location</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Location</label>
                     <input
                         placeholder="Location (North/South/...)"
                         value={sensorLocation}
@@ -200,7 +200,7 @@ export default function ManageTopics() {
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Sensor Type</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Sensor Type</label>
                     <select
                         value={sensorTypeEnum}
                         onChange={e => setSensorTypeEnum(Number(e.target.value) as SensorType)}
@@ -216,7 +216,7 @@ export default function ManageTopics() {
                     </select>
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Topic Path</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Topic Path</label>
                     <input
                         placeholder="Default topic path (optional)"
                         value={defaultTopicPath}
@@ -226,7 +226,7 @@ export default function ManageTopics() {
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Group ID</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Group ID</label>
                     <input
                         placeholder="Group ID (optional)"
                         inputMode="numeric"
@@ -237,7 +237,7 @@ export default function ManageTopics() {
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Location</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Location</label>
                     <select
                         value={coordinateMappingId}
                         onChange={e => setCoordinateMappingId(e.target.value)}
@@ -261,7 +261,7 @@ export default function ManageTopics() {
                             disabled={busy}
                             className="w-4 h-4 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500 focus:ring-2"
                         />
-                        <span className="text-xs font-medium text-gray-700">Recovery</span>
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-400">Recovery</span>
                     </label>
                     <button
                         onClick={onCreate}
@@ -274,29 +274,29 @@ export default function ManageTopics() {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200">
+            <div className="overflow-x-auto bg-white dark:bg-neutral-700 rounded-lg shadow border border-gray-200 dark:border-none">
                 <table className="min-w-full table-auto">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gray-50 dark:bg-neutral-700">
                     <tr>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b border-gray-200">ID</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b border-gray-200">Sensor</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b border-gray-200">Location</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b border-gray-200">Type</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b border-gray-200">Default
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200">ID</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200">Sensor</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200">Location</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200">Type</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200">Default
                             Topic Path
                         </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b border-gray-200">Group</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b border-gray-200">Coord
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200">Group</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200">Coord
                             Mapping
                         </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-b border-gray-200">Recovery</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200">Recovery</th>
                         <th className="px-3 py-2 border-b border-gray-200">Actions</th>
                     </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                     {rows.map((r, i) => (
                         <tr key={r.topicSettingId ?? i} className="hover:bg-gray-50">
-                            <td className="px-3 py-2 text-sm text-gray-900">{r.topicSettingId ?? "—"}</td>
+                            <td className="px-3 py-2 text-sm text-gray-900 dark:text-gray-200">{r.topicSettingId ?? "—"}</td>
 
                             <td className="px-3 py-2">
                                 {r._editing ? (
@@ -306,7 +306,7 @@ export default function ManageTopics() {
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-pink-300"
                                     />
                                 ) : (
-                                    <span className="text-sm text-gray-900">{r.sensorName ?? "—"}</span>
+                                    <span className="text-sm text-gray-900 dark:text-gray-200">{r.sensorName ?? "—"}</span>
                                 )}
                             </td>
 
@@ -318,7 +318,7 @@ export default function ManageTopics() {
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-pink-300"
                                     />
                                 ) : (
-                                    <span className="text-sm text-gray-900">{r.sensorLocation ?? "—"}</span>
+                                    <span className="text-sm text-gray-900 dark:text-gray-200">{r.sensorLocation ?? "—"}</span>
                                 )}
                             </td>
 
@@ -338,7 +338,7 @@ export default function ManageTopics() {
                                     </select>
                                 ) : (
                                     <span
-                                        className="text-sm text-gray-900">{r.sensorTypeEnum !== undefined ? SensorType[r.sensorTypeEnum] : "—"}</span>
+                                        className="text-sm text-gray-900 dark:text-gray-200">{r.sensorTypeEnum !== undefined ? SensorType[r.sensorTypeEnum] : "—"}</span>
                                 )}
                             </td>
 
@@ -376,7 +376,7 @@ export default function ManageTopics() {
                                         className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-pink-300"
                                     />
                                 ) : (
-                                    <span className="text-sm text-gray-900">{r.coordinateMappingId ?? "—"}</span>
+                                    <span className="text-sm text-gray-900 dark:text-gray-200">{r.coordinateMappingId ?? "—"}</span>
                                 )}
                             </td>
 
@@ -389,7 +389,7 @@ export default function ManageTopics() {
                                         className="w-4 h-4 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500 focus:ring-2"
                                     />
                                 ) : (
-                                    <span className="text-sm text-gray-900">{r.hasRecovery ? "Yes" : "No"}</span>
+                                    <span className="text-sm text-gray-900 dark:text-gray-200">{r.hasRecovery ? "Yes" : "No"}</span>
                                 )}
                             </td>
 
@@ -434,7 +434,7 @@ export default function ManageTopics() {
                     ))}
                     {rows.length === 0 && (
                         <tr>
-                            <td colSpan={9} className="px-3 py-4 text-center text-sm text-gray-500">
+                            <td colSpan={9} className="px-3 py-4 text-center text-sm text-gray-500 dark:text-gray-200">
                                 No topics configured.
                             </td>
                         </tr>

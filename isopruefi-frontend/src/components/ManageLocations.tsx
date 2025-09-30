@@ -77,11 +77,11 @@ export default function ManageLocations({onChanged}: Props) {
 
     return (
         <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-6">Manage Locations</h3>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-[#d3546c] mb-6">Manage Locations</h3>
 
             {/* Add Location Section */}
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">Add New Location</h4>
+            <div className="mb-6 p-4 bg-gray-50 dark:bg-neutral-700 rounded-lg border dark:border-none">
+                <h4 className="text-sm font-semibold text-gray-700  dark:text-gray-400 mb-3">Add New Location</h4>
                 <div className="flex flex-col sm:flex-row gap-3">
                     <div className="flex-1">
                         <input
@@ -112,7 +112,7 @@ export default function ManageLocations({onChanged}: Props) {
 
             {/* Locations Overview */}
             <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">Available Locations ({locations.length})</h4>
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-400 mb-3">Available Locations ({locations.length})</h4>
                 {loadingLocations ? (
                     <div className="flex items-center justify-center py-8 text-gray-500">
                         <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
