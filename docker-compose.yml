@@ -104,7 +104,7 @@ services:
     container_name: postgres-1
     restart: unless-stopped
     volumes:
-      - ./isopruefi-docker/postgres-1:/var/lib/postgresql/data
+      - pgdata1:/var/lib/postgresql/data
     networks:
       - isopruefi-network
     env_file:
@@ -124,7 +124,7 @@ services:
     container_name: postgres-2
     restart: unless-stopped
     volumes:
-      - ./isopruefi-docker/postgres-2:/var/lib/postgresql/data
+      - pgdata2:/var/lib/postgresql/data
     networks:
       - isopruefi-network
     env_file:
@@ -316,3 +316,7 @@ services:
     depends_on:
       - influxdb3
       - pgpool
+
+volumes:
+  pgdata1:
+  pgdata2:

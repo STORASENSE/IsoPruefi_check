@@ -1,143 +1,98 @@
-using System.Globalization;
-using System.Net;
-using System.Text.Json;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Dapper;
 using Database.EntityFramework.Models;
 using Database.Repository.CoordinateRepo;
+using Microsoft.Extensions.Logging;
+using Npgsql;
 
 namespace Rest_API.Services.Temp;
 
 /// <summary>
-///     Provides operations related to the location for the outside temperature data, for example getting the right
-///     coordinates for the postalcode.
+/// Provides operations related to the location for outside temperature data,
+/// e.g., retrieving coordinates for a given postal code – now via local DB lookup (no external API).
 /// </summary>
 public class TempService : ITempService
 {
-    /// <summary>
-    ///     Application configuration used to retrieve settings such as API keys or URLs.
-    /// </summary>
-    private readonly IConfiguration _configuration;
-
-    /// <summary>
-    ///     Repository used to access coordinate data and mappings.
-    /// </summary>
     private readonly ICoordinateRepo _coordinateRepo;
-
-    /// <summary>
-    ///     The base URL or API key for the geocoding service used in this service.
-    /// </summary>
-    private readonly string _geocodingApi;
-
-    /// <summary>
-    ///     Factory used to create <see cref="HttpClient" /> instances for making HTTP requests.
-    /// </summary>
-    private readonly IHttpClientFactory _httpClientFactory;
-
-    /// <summary>
-    ///     Logger instance used to capture diagnostic and error information for the <see cref="TempService" />.
-    /// </summary>
     private readonly ILogger<TempService> _logger;
 
-    /// <summary>
-    ///     Initializes a new instance of the <see cref="TempService" /> class.
-    /// </summary>
-    /// <param name="logger">The logger instance for logging actions and errors.</param>
-    /// <param name="httpClientFactory">The httpClient for API calls.</param>
-    /// <param name="coordinateRepo">The settingsRepo instance for connection with the postgres database.</param>
-    /// <param name="configuration"></param>
-    public TempService(ILogger<TempService> logger, IHttpClientFactory httpClientFactory,
-        ICoordinateRepo coordinateRepo, IConfiguration configuration)
+    public TempService(ILogger<TempService> logger, ICoordinateRepo coordinateRepo)
     {
         _logger = logger;
-        _httpClientFactory = httpClientFactory;
         _coordinateRepo = coordinateRepo;
-        _configuration = configuration;
+    }
 
-        _geocodingApi = _configuration["Weather:NominatimApiUrl"] ?? throw new InvalidOperationException(
-            "Weather:NominatimApiUrl configuration is missing");
+    /// <summary>
+    /// Resolves coordinates (and city name) for a postal code from the local PostgreSQL DB.
+    /// First checks CoordinateMappings, then falls back to public.location.
+    /// </summary>
+    private async Task<(double lat, double lon, string city)?> QueryLatLonByPlzAsync(int postalCode)
+    {
+        // 1) Check if we already have a mapping stored
+        // NOTE: If your repo provides GetByPostalCode(int), prefer that over GetLocation().
+        var existing = await _coordinateRepo.GetLocation();
+        if (existing is not null && existing.PostalCode == postalCode)
+            return (existing.Latitude, existing.Longitude, existing.Location ?? string.Empty);
+
+        // 2) Fallback to the imported public.location table (via Dapper/Npgsql -> pgpool)
+        var host = Environment.GetEnvironmentVariable("PGHOST") ?? "pgpool";
+        var port = Environment.GetEnvironmentVariable("PGPORT") ?? "9999";
+        var user = Environment.GetEnvironmentVariable("POSTGRES_USERNAME") ?? "postgres";
+        var pwd  = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? "postgres";
+        var db   = Environment.GetEnvironmentVariable("POSTGRES_DATABASE") ?? "isopruefi";
+        var cs   = $"Host={host};Port={port};Username={user};Password={pwd};Database={db};Pooling=true;Minimum Pool Size=1;Maximum Pool Size=20;Timeout=15";
+
+        await using var conn = new NpgsqlConnection(cs);
+
+        const string sql = @"
+            SELECT latitude AS Lat, longitude AS Lon, city AS City
+            FROM public.location
+            WHERE plz = @plz
+            -- prefer shorter, 'normal' city names first
+            ORDER BY (char_length(city) <= 30) DESC, char_length(city) ASC, city ASC
+            LIMIT 1;";
+
+        var row = await conn.QueryFirstOrDefaultAsync<(double Lat, double Lon, string City)?>(sql, new { plz = postalCode.ToString() });
+        if (row is null) return null;
+
+        // 3) Persist mapping so the rest of the app can reuse it
+        if (!await _coordinateRepo.ExistsPostalCode(postalCode))
+        {
+            await _coordinateRepo.InsertNewPostalCode(new CoordinateMapping
+            {
+                PostalCode = postalCode,
+                Location   = row.Value.City,
+                Latitude   = row.Value.Lat,
+                Longitude  = row.Value.Lon,
+                LastUsed   = DateTime.UtcNow
+            });
+        }
+
+        return (row.Value.Lat, row.Value.Lon, row.Value.City);
     }
 
     /// <inheritdoc />
     public async Task GetCoordinates(int postalCode)
     {
-        // Checking if there is an entry for that location in the database.
-        var existingEntry = await _coordinateRepo.ExistsPostalCode(postalCode);
-        if (existingEntry)
+        // Already known?
+        if (await _coordinateRepo.ExistsPostalCode(postalCode))
         {
-            _logger.LogInformation("There is an existing entry for that postalcode");
+            _logger.LogInformation("There is an existing entry for postal code {PostalCode}.", postalCode);
+            return;
         }
-        else
+
+        // Local DB lookup (no external HTTP call)
+        var coords = await QueryLatLonByPlzAsync(postalCode);
+        if (coords is null)
         {
-            var response = await GetCoordinatesApi(postalCode);
-            if (response == null)
-            {
-                _logger.LogError("No response received from API");
-                return;
-            }
-
-            try
-            {
-                if (response.IsSuccessStatusCode)
-                {
-                    using var json = JsonDocument.Parse(await response.Content.ReadAsStreamAsync());
-
-                    // Getting the coordinates from the JSON file.
-                    var root = json.RootElement;
-                    if (root.ValueKind == JsonValueKind.Array && root.GetArrayLength() > 0)
-                    {
-                        var rootElement = root[0];
-                        if (rootElement.TryGetProperty("lat", out var lat) &&
-                            rootElement.TryGetProperty("lon", out var lon) &&
-                            rootElement.TryGetProperty("display_name", out var location))
-                        {
-                            var latDouble = double.Parse(lat.GetString()!, CultureInfo.InvariantCulture);
-                            var lonDouble = double.Parse(lon.GetString()!, CultureInfo.InvariantCulture);
-                            var locationString = location.GetString();
-                            var splitLocation = locationString!.Split(",");
-                            var locationName = splitLocation[1];
-
-                            var postalCodeLocation = new CoordinateMapping
-                            {
-                                PostalCode = postalCode,
-                                Location = locationName.Trim(),
-                                Latitude = latDouble,
-                                Longitude = lonDouble
-                            };
-
-                            // Saving the new location in the database.
-                            try
-                            {
-                                await _coordinateRepo.InsertNewPostalCode(postalCodeLocation);
-                            }
-                            catch (Exception e)
-                            {
-                                _logger.LogError(e, "Exception while saving new location");
-                            }
-
-                            _logger.LogInformation("Coordinates retrieved successfully");
-                        }
-                        else
-                        {
-                            _logger.LogError("Coordinates and city name could not be retrieved");
-                        }
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("The plz does not exist or is invalid.");
-                    }
-                }
-                else
-                {
-                    _logger.LogError("Getting coordinates failed with HTTP status code: " + response.StatusCode);
-                    if (response.StatusCode == HttpStatusCode.Forbidden)
-                        throw new InvalidOperationException("The limit is exceeded, please try again later.");
-                }
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Error while calling geocoding API");
-                throw;
-            }
+            _logger.LogError("No coordinates found in local DB for postal code {PostalCode}.", postalCode);
+            throw new InvalidOperationException("Postal code unknown or not present in dataset.");
         }
+
+        _logger.LogInformation("Coordinates resolved locally and stored: {Lat}, {Lon} ({City})",
+            coords.Value.lat, coords.Value.lon, coords.Value.city);
     }
 
     /// <inheritdoc />
@@ -150,38 +105,8 @@ public class TempService : ITempService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error while fetching postalcodes from the database");
+            _logger.LogError(e, "Error while fetching postal codes from the database");
+            return null;
         }
-
-        return null;
-    }
-
-    /// <summary>
-    ///     Calls an API to retrieve coordinates for a location.
-    /// </summary>
-    /// <param name="postalCode">Postalcode.</param>
-    /// <returns>The API response message.</returns>
-    private async Task<HttpResponseMessage?> GetCoordinatesApi(int postalCode)
-    {
-        // If there is no entry an API will be used to get the coordinates.
-        var httpClient = _httpClientFactory.CreateClient();
-
-        // Creating a user agent for accessing the API.
-        var userAgent =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
-        httpClient.DefaultRequestHeaders.Add("User-Agent", userAgent);
-
-        try
-        {
-            // Getting the coordinates from nominatim.
-            var response = await httpClient.GetAsync(_geocodingApi + postalCode);
-            return response;
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Calling the API was not successful");
-        }
-
-        return null;
     }
 }
