@@ -7,6 +7,60 @@
     "version": "v1"
   },
   "paths": {
+    "/api/v1/Location/GetCoordinates/{postalCode}": {
+      "post": {
+        "tags": [
+          "Location"
+        ],
+        "operationId": "Location_GetCoordinates",
+        "parameters": [
+          {
+            "name": "postalCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/Location/ShowAvailableLocations": {
+      "get": {
+        "tags": [
+          "Location"
+        ],
+        "operationId": "Location_ShowAvailableLocations",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/Authentication/Login": {
       "post": {
         "tags": [

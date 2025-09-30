@@ -19,11 +19,13 @@ using NSwag.AspNetCore;
 using NSwag.Generation.Processors.Security;
 using Rest_API.Helper;
 using Rest_API.Models;
+
 using Rest_API.Seeder;
 using Rest_API.Services.Auth;
 using Rest_API.Services.Temp;
 using Rest_API.Services.Token;
 using Rest_API.Services.User;
+using Rest_API.Services.Locations;
 
 namespace Rest_API;
 
@@ -141,6 +143,7 @@ public class Program
         builder.Services.AddScoped<ITimeDataRepo, TimeDataRepo>();
         builder.Services.AddScoped<ISettingsRepo, SettingsRepo>();
         builder.Services.AddScoped<ICoordinateRepo, CoordinateRepo>();
+        builder.Services.AddScoped<ILocationService, LocationService>();
 
         builder.ConfigureHealthChecks();
 
