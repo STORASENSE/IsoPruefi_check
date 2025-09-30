@@ -31,29 +31,30 @@ export default function AdminPage() {
     };
 
     return (
-        <div className="min-h-screen w-full bg-[#f5cacd] p-6">
+        <div className="min-h-screen w-full bg-[#f5cacd] dark:bg-neutral-900 dark:text-white p-6">
             <h1 className="text-4xl font-extrabold text-[#d3546c] mb-8 text-center">
                 Admin Page
             </h1>
 
             {/* Controls Section */}
             <div
-                className="flex flex-col sm:flex-row gap-6 items-start sm:items-center mb-6 bg-white rounded-xl shadow p-4 max-w-6xl mx-auto">
+                className="flex flex-col sm:flex-row gap-6 items-start sm:items-center mb-6
+                bg-white dark:bg-neutral-800 rounded-xl shadow p-4 max-w-6xl mx-auto">
                 <div className="w-full sm:w-80">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-400 mb-2">Location</label>
                     <PlacePicker value={place} onChange={setPlace} refreshKey={locVersion}/>
-                    <p className="text-xs text-gray-500 mt-1">Select the monitoring location</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Select the monitoring location</p>
                 </div>
 
                 <div className="w-full sm:w-auto">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Temperature Units</label>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-400 mb-2">Temperature Units</label>
                     <UnitToggle value={isF} onChange={setIsF}/>
                 </div>
             </div>
 
             {/* Weather Chart Section */}
-            <section className="bg-white rounded-xl shadow p-6 max-w-6xl mx-auto mb-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+            <section className="bg-white dark:bg-neutral-800 rounded-xl shadow p-6 max-w-6xl mx-auto mb-6">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-[#d3546c] mb-4 text-center">
                     Weather Chart
                 </h2>
                 <TempChart place={place} isFahrenheit={isF}/>
@@ -61,11 +62,11 @@ export default function AdminPage() {
 
             {/* Admin Management Sections */}
             <div className="max-w-6xl mx-auto space-y-6">
-                <div className="bg-white rounded-xl shadow p-6">
+                <div className="bg-white dark:bg-neutral-800 rounded-xl shadow p-6">
                     <ManageLocations onChanged={() => setLocVersion(v => v + 1)}/>
                 </div>
 
-                <div className="bg-white rounded-xl shadow p-6">
+                <div className="bg-white dark:bg-neutral-800 rounded-xl shadow p-6">
                     <ManageTopics/>
                 </div>
             </div>

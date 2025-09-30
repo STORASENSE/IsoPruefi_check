@@ -165,7 +165,7 @@ export function TempChart({ place = "Heidenheim an der Brenz", isFahrenheit = fa
      * @returns {JSX.Element} Error message and retry button.
      */
     if (error) return (
-        <div className="w-full h-[400px] rounded-xl bg-white boder-black-100 shadow p-4 flex flex-col items-center justify-center gap-3">
+        <div className="w-full h-[400px] rounded-xl bg-white dark:bg-neutral-800 boder-black-100 shadow p-4 flex flex-col items-center justify-center gap-3">
             <p className="text-red-600 text-sm">Error loading temperature data: {error}</p>
             <button
                 onClick={() => window.location.reload()}
@@ -217,13 +217,13 @@ export function TempChart({ place = "Heidenheim an der Brenz", isFahrenheit = fa
     return (
         <div className="flex w-full gap-6">
             {/* Chart Section */}
-            <div className="flex-1 rounded-xl bg-white shadow p-4 h-[400px] border border-gray-300 text-center">
-                <label className="mb-3 block text-sm text-gray-700">
+            <div className="flex-1 rounded-xl bg-white dark:bg-neutral-800 shadow p-4 h-[400px] border border-gray-300 text-center">
+                <label className="mb-3 block text-sm text-gray-700 dark:text-gray-400">
                     Show:{" "}
                     <select
                         value={filter}
                         onChange={(e) => setFilter(e.target.value as any)}
-                        className="ml-2 rounded-md border border-pink-200 bg-white px-3 py-1 text-sm shadow-sm text-center focus:outline-none focus:ring-2 focus:ring-pink-100 focus:border-pink-200"
+                        className="ml-2 rounded-md border border-pink-200 dark:border-neutral-600 bg-white dark:bg-neutral-900 px-3 py-1 text-sm shadow-sm text-center focus:outline-none focus:ring-2 focus:ring-pink-100 focus:border-pink-200"
                     >
                         <option value="all">All</option>
                         <option value="hour">Last Hour</option>
@@ -298,7 +298,7 @@ export function TempChart({ place = "Heidenheim an der Brenz", isFahrenheit = fa
                     const v = lastVal(weatherData, k);
                     const name = k.replace(/temp_|_/g, " ").replace(/^\s+/, "");
                     return (
-                        <div key={k} className="rounded-xl bg-white shadow px-5 py-4 border border-gray-300">
+                        <div key={k} className="rounded-xl bg-white dark:bg-neutral-800 shadow px-5 py-4 border border-gray-300">
                             <div className="text-sm text-gray-500">{name}</div>
                             <div className="mt-1 text-3xl font-bold" style={{ color: colors[i % colors.length] }}>
                                 {fmt(v)}
@@ -307,7 +307,7 @@ export function TempChart({ place = "Heidenheim an der Brenz", isFahrenheit = fa
                     );
                 })}
 
-                <div className="rounded-xl bg-white shadow px-5 py-4 border border-gray-300">
+                <div className="rounded-xl bg-white dark:bg-neutral-800 shadow px-5 py-4 border border-gray-300 dark:border-neutral-600">
                     <div className="text-sm text-gray-500">Outside</div>
                     <div className="mt-1 text-3xl font-bold text-[#3fbf86]">{fmt(vOut)}</div>
                 </div>

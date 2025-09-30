@@ -66,7 +66,7 @@ export const PlacePicker: React.FC<Props> = ({
             value={selectValue}
             onChange={handleChange}
             disabled={loading || opts.length === 0}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-300 disabled:bg-gray-100 disabled:text-gray-400"
+            className="w-full rounded-lg border border-gray-300 dark:border-neutral-600 px-4 py-2 bg-white dark:bg-neutral-900 text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-300 disabled:bg-gray-100 disabled:dark:bg-neutral-900 disabled:text-gray-400"
         >
             {selectValue === "" && (
                 <option value="" disabled>
