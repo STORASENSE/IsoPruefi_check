@@ -50,7 +50,7 @@ public class Program
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("DevCors", policy =>
-                    policy.WithOrigins(allowedOrigins)
+                    policy.AllowAnyOrigin()
                         .AllowAnyHeader()
                         .AllowAnyMethod());
             });
