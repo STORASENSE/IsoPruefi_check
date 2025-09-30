@@ -2,41 +2,44 @@
 ################################
 
 # Use the official Node.js Alpine image (adjust based on your project's requirements)
-# You can find the appropriate image on Docker Hub: https://hub.docker.com/_/node
-# In this example, we're using node:24-alpine3.20
-# run in termilnal commande line "node --version to get the version of your app"
 FROM node:24-alpine AS build
 
 # Set the working directory inside the container
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json into the container
+# Copy package files and install dependencies as root (this is necessary)
 COPY package*.json ./
-
-# Install dependencies using npm
 RUN npm ci
 
-# Copy the project files into the working directory
+# Copy the project files
 COPY . .
 
 # Build the React app for production
 RUN npm run build
 
+# Create a non-root user for security
+RUN addgroup -g 1001 -S buildgroup && \
+    adduser -u 1001 -S -G buildgroup builduser && \
+    chown -R builduser:buildgroup /usr/src/app
+
+# Switch to non-root user
+USER builduser
+
 ################################
 #### PRODUCTION ENVIRONMENT ####
 ################################
 
-# Use the official NGINX image for production
-FROM nginx:1.29-alpine AS production
+# Use the unprivileged NGINX image for production
+FROM nginxinc/nginx-unprivileged:1.29-alpine AS production
 
-# copy nginx configuration in side conf.d folder
-COPY --from=build /usr/src/app/default.conf /etc/nginx/conf.d/default.conf
+# Copy nginx configuration with correct ownership
+COPY --from=build --chown=nginx:nginx /usr/src/app/default.conf /etc/nginx/conf.d/default.conf
 
 # Copy the build output from the dist folder into the Nginx html directory
-COPY --from=build /usr/src/app/dist /usr/share/nginx/html
+COPY --from=build --chown=nginx:nginx /usr/src/app/dist /usr/share/nginx/html
 
-# Expose port 80 to allow access to the app
-EXPOSE 80
+# Expose port 8080 (unprivileged port)
+EXPOSE 8080
 
 # Run Nginx in the foreground
-ENTRYPOINT ["nginx", "-g", "daemon off;"] 
+ENTRYPOINT ["nginx", "-g", "daemon off;"]

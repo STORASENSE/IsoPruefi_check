@@ -1,16 +1,33 @@
 ﻿# Use .NET 9 SDK for building and running with hot reload
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS dev
 
+# Create a non-root user for development security
+RUN groupadd --gid 1000 devuser && \
+    useradd --uid 1000 --gid devuser --shell /bin/bash --create-home devuser
+
+# Create working directory with proper ownership
+RUN mkdir -p /src && \
+    chown -R devuser:devuser /src
+
+# Switch to non-root user
+USER devuser
+
 # Set working directory
 WORKDIR /src
 
-# Copy project file and restore dependencies
-COPY ["Rest-API/Rest-API.csproj", "Rest-API/"]
-COPY ["Database/Database.csproj", "Database/"]
+# Copy project files with correct ownership
+COPY --chown=devuser:devuser ["Rest-API/Rest-API.csproj", "Rest-API/"]
+COPY --chown=devuser:devuser ["Database/Database.csproj", "Database/"]
+
+# Restore dependencies as non-root user
 RUN dotnet restore Rest-API/Rest-API.csproj
 RUN dotnet restore Database/Database.csproj
-COPY . .
+
+# Copy remaining source files with proper ownership
+COPY --chown=devuser:devuser . .
+
+# Set working directory to project directory
 WORKDIR "/src/Rest-API"
 
-# Run the app with hot reload
+# Run the app with hot reload on non-privileged port
 ENTRYPOINT ["dotnet", "run", "--urls=http://0.0.0.0:8080"]

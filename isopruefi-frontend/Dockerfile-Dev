@@ -1,20 +1,20 @@
 # Use the latest LTS version of Node.js
-FROM node:24-alpine
+#FROM node:24-alpine
  
 # Set the working directory inside the container
-WORKDIR /app
+#WORKDIR /app
  
 # Copy package.json and package-lock.json
-COPY package*.json ./
+#COPY package*.json ./
  
 # Install dependencies
-RUN npm install
+#RUN npm install
  
 # Copy the rest of your application files
-COPY . .
+#COPY . .
 
 # Expose the port that Vite dev server runs on
-EXPOSE 5173
+#EXPOSE 5173
 
 # Define the command to run your app with host binding
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+#CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
