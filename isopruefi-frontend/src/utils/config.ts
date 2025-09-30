@@ -23,7 +23,7 @@ export function apiBase(): string {
     const runtime = (window as any).__APP_CONFIG__?.API_BASE_URL;
     const env = (import.meta as any).env?.VITE_API_BASE_URL;
 
-    let base = runtime || env || "/backend";
+    let base = runtime || env || "https://backend.localhost";
 
     if (/^https?:\/\//i.test(base)) return base.replace(/\/+$/, "");
     return ("/" + String(base).replace(/^\/+/, "")).replace(/\/+$/, "");
