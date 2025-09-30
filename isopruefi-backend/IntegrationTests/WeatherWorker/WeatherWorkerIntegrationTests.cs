@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace IntegrationTests.WeatherWorker;
 
 /// <summary>
-///     Integration tests for the Weather Data Worker to verify coordinate management, InfluxDB operations,
+///     Integration tests for the Weather Data Worker to verify coordinate management, PostgreSQL operations,
 ///     API response parsing, and dependency resolution functionality.
 /// </summary>
 [TestFixture]
@@ -83,14 +83,14 @@ public class WeatherWorkerIntegrationTests : IntegrationTestBase
     }
 
     /// <summary>
-    ///     Tests the InfluxDB repository's ability to write weather data without throwing exceptions in test environment.
+    ///     Tests the PostgreSQL repository's ability to write weather data without throwing exceptions in test environment.
     /// </summary>
     [Test]
-    public async Task InfluxRepo_WriteOutsideWeatherData_DoesNotThrowException()
+    public async Task TimeDataRepo_WriteOutsideWeatherData_DoesNotThrowException()
     {
         // Arrange
         using var scope = Factory.Services.CreateScope();
-        var influxRepo = scope.ServiceProvider.GetRequiredService<ITimeDataRepo>();
+        var timeDataRepo = scope.ServiceProvider.GetRequiredService<ITimeDataRepo>();
 
         var testLocation = "Test Location";
         var testSource = "Test Source";
@@ -99,9 +99,9 @@ public class WeatherWorkerIntegrationTests : IntegrationTestBase
         var testPostalCode = 12345;
 
         // Act & Assert
-        // This should not throw an exception even if InfluxDB is not available
+        // This should not throw an exception when writing to PostgreSQL
         var act = async () =>
-            await influxRepo.WriteOutsideWeatherData(testLocation, testSource, testTemperature, testTimestamp,
+            await timeDataRepo.WriteOutsideWeatherData(testLocation, testSource, testTemperature, testTimestamp,
                 testPostalCode);
         await act.Should().NotThrowAsync();
     }
@@ -231,12 +231,12 @@ public class WeatherWorkerIntegrationTests : IntegrationTestBase
 
         // Verify all dependencies can be resolved
         var coordinateRepo = scope.ServiceProvider.GetService<ICoordinateRepo>();
-        var influxRepo = scope.ServiceProvider.GetService<ITimeDataRepo>();
+        var timeDataRepo = scope.ServiceProvider.GetService<ITimeDataRepo>();
         var httpClientFactory = scope.ServiceProvider.GetService<IHttpClientFactory>();
 
         // Assert
         coordinateRepo.Should().NotBeNull();
-        influxRepo.Should().NotBeNull();
+        timeDataRepo.Should().NotBeNull();
         httpClientFactory.Should().NotBeNull();
     }
 
