@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Database.Repository.InfluxRepo;
+using Database.Repository.TimeDataRepo;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,7 +27,7 @@ public class ConnectionTests
         _mockLogger = new Mock<ILogger<Connection>>();
         _mockServiceProvider = new Mock<IServiceProvider>();
         _mockServiceScope = new Mock<IServiceScope>();
-        _mockInfluxRepo = new Mock<IInfluxRepo>();
+        _mockTimeDataRepo = new Mock<ITimeDataRepo>();
 
         // Create a configuration using ConfigurationBuilder instead of mocking extension methods
         var configDict = new Dictionary<string, string>
@@ -41,8 +41,8 @@ public class ConnectionTests
 
         // Setup service provider and scope
         var mockScopeServiceProvider = new Mock<IServiceProvider>();
-        mockScopeServiceProvider.Setup(sp => sp.GetService(typeof(IInfluxRepo)))
-            .Returns(_mockInfluxRepo.Object);
+        mockScopeServiceProvider.Setup(sp => sp.GetService(typeof(ITimeDataRepo)))
+            .Returns(_mockTimeDataRepo.Object);
         _mockServiceScope.Setup(s => s.ServiceProvider).Returns(mockScopeServiceProvider.Object);
 
         // Setup IServiceScopeFactory instead of extension method
@@ -58,7 +58,7 @@ public class ConnectionTests
     private Mock<IServiceProvider> _mockServiceProvider;
     private Mock<IServiceScope> _mockServiceScope;
     private IConfiguration _configuration;
-    private Mock<IInfluxRepo> _mockInfluxRepo;
+    private Mock<ITimeDataRepo> _mockTimeDataRepo;
     private Connection _connection;
 
     /// <summary>
@@ -220,10 +220,10 @@ public class ConnectionTests
         if (method != null)
         {
             var task = (Task)method.Invoke(_connection,
-                new object[] { sensorReading, "testSensor", _mockInfluxRepo.Object })!;
+                new object[] { sensorReading, "testSensor", _mockTimeDataRepo.Object })!;
             await task;
 
-            _mockInfluxRepo.Verify(r => r.WriteSensorData(25.5, "testSensor", 1234567890, 1), Times.Once);
+            _mockTimeDataRepo.Verify(r => r.WriteSensorData(25.5, "testSensor", 1234567890, 1), Times.Once);
         }
     }
 
@@ -246,10 +246,10 @@ public class ConnectionTests
         if (method != null)
         {
             var task = (Task)method.Invoke(_connection,
-                new object[] { sensorReading, "testSensor", _mockInfluxRepo.Object })!;
+                new object[] { sensorReading, "testSensor", _mockTimeDataRepo.Object })!;
             await task;
 
-            _mockInfluxRepo.Verify(
+            _mockTimeDataRepo.Verify(
                 r => r.WriteSensorData(It.IsAny<double>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<int>()),
                 Times.Never);
         }
@@ -274,10 +274,10 @@ public class ConnectionTests
         if (method != null)
         {
             var task = (Task)method.Invoke(_connection,
-                new object[] { sensorReading, "testSensor", _mockInfluxRepo.Object })!;
+                new object[] { sensorReading, "testSensor", _mockTimeDataRepo.Object })!;
             await task;
 
-            _mockInfluxRepo.Verify(
+            _mockTimeDataRepo.Verify(
                 r => r.WriteSensorData(It.IsAny<double>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<int>()),
                 Times.Never);
         }
@@ -307,11 +307,11 @@ public class ConnectionTests
         if (method != null)
         {
             var task = (Task)method.Invoke(_connection,
-                new object[] { batchReading, "testSensor", _mockInfluxRepo.Object })!;
+                new object[] { batchReading, "testSensor", _mockTimeDataRepo.Object })!;
             await task;
 
             // Should process each meta reading
-            _mockInfluxRepo.Verify(
+            _mockTimeDataRepo.Verify(
                 r => r.WriteSensorData(It.IsAny<double>(), "testSensor", It.IsAny<long>(), It.IsAny<int>()),
                 Times.AtLeast(1));
         }
@@ -323,7 +323,7 @@ public class ConnectionTests
     [Test]
     public async Task ProcessSensorReading_DatabaseError_HandlesGracefully()
     {
-        _mockInfluxRepo.Setup(r =>
+        _mockTimeDataRepo.Setup(r =>
                 r.WriteSensorData(It.IsAny<double>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<int>()))
             .ThrowsAsync(new InvalidOperationException("Database error"));
 
@@ -342,7 +342,7 @@ public class ConnectionTests
             var action = async () =>
             {
                 var task = (Task)method.Invoke(_connection,
-                    new object[] { sensorReading, "testSensor", _mockInfluxRepo.Object })!;
+                    new object[] { sensorReading, "testSensor", _mockTimeDataRepo.Object })!;
                 await task;
             };
 

@@ -1,9 +1,8 @@
 using System.Text.RegularExpressions;
 using Database.EntityFramework;
 using Database.Repository.CoordinateRepo;
-using Database.Repository.InfluxRepo;
-using Database.Repository.InfluxRepo.InfluxCache;
 using Database.Repository.SettingsRepo;
+using Database.Repository.TimeDataRepo;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.Hosting;
@@ -25,7 +24,6 @@ namespace LoadTests.Infrastructure;
 public class LoadTestRestAPIFactory : WebApplicationFactory<Program>
 {
     private readonly PostgreSqlContainer _dbContainer;
-    private readonly IContainer _influxDbContainer;
 
     /// <summary>
     ///     Initializes a new instance of the LoadTestRestAPIFactory
@@ -38,34 +36,12 @@ public class LoadTestRestAPIFactory : WebApplicationFactory<Program>
             .WithUsername("loadtest")
             .WithPassword("LoadTest123!")
             .Build();
-
-        _influxDbContainer = new ContainerBuilder()
-            .WithImage("influxdb:3.2.1-core")
-            .WithPortBinding(8181, true)
-            .WithVolumeMount(Guid.NewGuid().ToString(), "/var/lib/influxdb3")
-            .WithCommand("influxdb3", "serve", "--node-id=node0", "--object-store=file",
-                "--data-dir=/var/lib/influxdb3")
-            .WithWaitStrategy(Wait.ForUnixContainer()
-                .UntilInternalTcpPortIsAvailable(8181))
-            .WithCleanUp(true)
-            .WithAutoRemove(true)
-            .Build();
     }
 
     /// <summary>
     ///     Gets the PostgreSQL database connection string
     /// </summary>
     public string DatabaseConnectionString => _dbContainer.GetConnectionString();
-
-    /// <summary>
-    ///     Gets the InfluxDB server URL
-    /// </summary>
-    public string InfluxDbUrl => $"http://localhost:{_influxDbContainer.GetMappedPublicPort(8181)}";
-
-    /// <summary>
-    ///     Gets the InfluxDB authentication token
-    /// </summary>
-    public string InfluxDbToken { get; private set; } = string.Empty;
 
     /// <summary>
     ///     Configures the web host for REST API load testing
@@ -82,8 +58,6 @@ public class LoadTestRestAPIFactory : WebApplicationFactory<Program>
                 ["Admin:Email"] = "loadtestadmin@loadtest.com",
                 ["Admin:Password"] = "LoadTestAdmin123!",
                 ["ConnectionStrings:DefaultConnection"] = _dbContainer.GetConnectionString(),
-                ["Influx:InfluxDBHost"] = InfluxDbUrl,
-                ["Influx:InfluxDBToken"] = InfluxDbToken,
                 ["Jwt:ValidAudience"] = "localhost",
                 ["Jwt:ValidIssuer"] = "localhost",
                 ["Jwt:Secret"] = "your-secure-256-bit-secret-key-replace-this-in-production"
@@ -111,8 +85,7 @@ public class LoadTestRestAPIFactory : WebApplicationFactory<Program>
 
             // Register required services for load testing
             services.AddMemoryCache();
-            services.AddScoped<CachedInfluxRepo>();
-            services.AddScoped<IInfluxRepo>(provider => provider.GetRequiredService<CachedInfluxRepo>());
+            services.AddScoped<ITimeDataRepo, TimeDataRepo>();
             services.AddScoped<ISettingsRepo, SettingsRepo>();
             services.AddSingleton<IReceiver, Receiver>();
             services.AddSingleton<IConnection, Connection>();
@@ -126,75 +99,30 @@ public class LoadTestRestAPIFactory : WebApplicationFactory<Program>
     }
 
     /// <summary>
-    ///     Initialize all containers and seed test data
+    ///     Initialize database container and seed test data
     /// </summary>
     public async Task InitializeAsync()
     {
-        // Start all containers in parallel
-        var tasks = new[]
-        {
-            _dbContainer.StartAsync(),
-            _influxDbContainer.StartAsync()
-        };
-
-        await Task.WhenAll(tasks);
-
-        // Create InfluxDB admin token
-        var command = new List<string>
-        {
-            "influxdb3",
-            "create",
-            "token",
-            "--admin"
-        };
-
-        var result = await _influxDbContainer.ExecAsync(command, CancellationToken.None);
-        InfluxDbToken = ParseTokenFromOutput(result.Stdout);
-        Console.WriteLine($"InfluxDB Token created: {InfluxDbToken}");
+        // Start database container
+        await _dbContainer.StartAsync();
 
         using var scope = Services.CreateScope();
         ApplicationDbContext.ApplyMigration<ApplicationDbContext>(scope);
     }
 
     /// <summary>
-    ///     Parses the InfluxDB token from command output
-    /// </summary>
-    /// <param name="tokenOutput">Raw output from InfluxDB token creation command</param>
-    /// <returns>Extracted token string or empty string if parsing fails</returns>
-    private string ParseTokenFromOutput(string tokenOutput)
-    {
-        // Remove ANSI escape codes and split by lines
-        var cleanOutput = Regex.Replace(tokenOutput, @"\x1B\[[0-9;]*[mK]", "");
-        var lines = cleanOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-
-        // Find the line with "Token:" and extract the token
-        foreach (var line in lines)
-            if (line.Contains("Token:"))
-            {
-                var parts = line.Split(':', 2);
-                if (parts.Length > 1) return parts[1].Trim();
-            }
-
-        return string.Empty;
-    }
-
-    /// <summary>
-    ///     Clean up containers
+    ///     Clean up container
     /// </summary>
     public async Task CleanupAsync()
     {
-        var tasks = new List<Task>();
-
         try
         {
-            if (_dbContainer != null) tasks.Add(_dbContainer.StopAsync());
-            if (_influxDbContainer != null) tasks.Add(_influxDbContainer.StopAsync());
-
-            await Task.WhenAll(tasks);
+            if (_dbContainer != null) 
+                await _dbContainer.StopAsync();
         }
         catch (ObjectDisposedException)
         {
-            // Containers already disposed, ignore
+            // Container already disposed, ignore
         }
     }
 
@@ -208,13 +136,11 @@ public class LoadTestRestAPIFactory : WebApplicationFactory<Program>
             try
             {
                 CleanupAsync().GetAwaiter().GetResult();
-
                 _dbContainer?.DisposeAsync().GetAwaiter().GetResult();
-                _influxDbContainer?.DisposeAsync().GetAwaiter().GetResult();
             }
             catch (ObjectDisposedException)
             {
-                // Containers already disposed, ignore
+                // Container already disposed, ignore
             }
 
         base.Dispose(disposing);

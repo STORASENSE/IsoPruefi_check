@@ -8,22 +8,22 @@ namespace Get_weatherData_worker.Helper;
 public class OpenMeteoHealthCheck : IHealthCheck
 {
     /// <summary>
-    ///     Factory used for making API requests.
-    /// </summary>
-    private readonly IHttpClientFactory _httpClientFactory;
-    
-    /// <summary>
     ///     Configuration used to retrieve settings.
     /// </summary>
     private readonly IConfiguration _configuration;
-    
+
+    /// <summary>
+    ///     Factory used for making API requests.
+    /// </summary>
+    private readonly IHttpClientFactory _httpClientFactory;
+
     /// <summary>
     ///     Logger instance used to document diagnostics.
     /// </summary>
     private readonly ILogger<OpenMeteoHealthCheck> _logger;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="OpenMeteoHealthCheck"/> class.
+    ///     Initializes a new instance of the <see cref="OpenMeteoHealthCheck" /> class.
     /// </summary>
     /// <param name="httpClientFactory">Factory for API calls.</param>
     /// <param name="configuration">Configuration for settings.</param>

@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Database.Repository.InfluxRepo;
+using Database.Repository.TimeDataRepo;
 using MQTT_Receiver_Worker.MQTT.Interfaces;
 using MQTT_Receiver_Worker.MQTT.Models;
 using MQTTnet;
@@ -19,37 +19,37 @@ public class Connection : IConnection
     ///     Application configuration used to retrieve settings related to MQTT or other services.
     /// </summary>
     private readonly IConfiguration _configuration;
-    
+
     /// <summary>
     ///     Semaphore used to ensure that only one connection attempt happens at a time.
     /// </summary>
     private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
-    
+
     /// <summary>
     ///     JSON serializer options used to serialize and deserialize messages sent/received via MQTT.
     /// </summary>
     private readonly JsonSerializerOptions _jsonSerializerOptions;
-    
+
     /// <summary>
     ///     Logger instance used to capture diagnostic and error information.
     /// </summary>
     private readonly ILogger<Connection> _logger;
-    
+
     /// <summary>
     ///     Options used to configure the MQTT client connection.
     /// </summary>
     private readonly MqttClientOptions _options;
-    
+
     /// <summary>
     ///     Provides access to the application's service container for resolving dependencies.
     /// </summary>
     private readonly IServiceProvider _serviceProvider;
-    
+
     /// <summary>
     ///     Indicates whether the MQTT client is currently connected to the broker.
     /// </summary>
     private bool _isConnected;
-    
+
     /// <summary>
     ///     The MQTT client instance used to communicate with the broker.
     /// </summary>
@@ -84,7 +84,7 @@ public class Connection : IConnection
     public bool IsConnected => _isConnected && _mqttClient?.IsConnected == true;
 
     /// <summary>
-    /// Gets a value indicating whether the client is subscribed to the necessary topics.
+    ///     Gets a value indicating whether the client is subscribed to the necessary topics.
     /// </summary>
     public bool IsSubscribed { get; set; }
 
@@ -211,7 +211,7 @@ public class Connection : IConnection
         // Don't immediately reconnect here - let the worker handle it with proper timing
     }
 
-    
+
     /// <summary>
     ///     Handles incoming MQTT messages from subscribed topics asynchronously.
     /// </summary>
@@ -226,7 +226,7 @@ public class Connection : IConnection
         try
         {
             using var scope = _serviceProvider.CreateScope();
-            var influxRepo = scope.ServiceProvider.GetRequiredService<IInfluxRepo>();
+            var influxRepo = scope.ServiceProvider.GetRequiredService<ITimeDataRepo>();
 
             var topic = e.ApplicationMessage.Topic;
             var topics = topic.Split('/');
@@ -273,12 +273,12 @@ public class Connection : IConnection
     /// </summary>
     /// <param name="tempSensorReading">The temperature sensor reading to process.</param>
     /// <param name="sensorName">The name of the sensor that produced the reading.</param>
-    /// <param name="influxRepo">The InfluxDB repository used to persist the reading.</param>
+    /// <param name="timeDataRepo">The InfluxDB repository used to persist the reading.</param>
     /// <returns>
     ///     A task that represents the asynchronous processing operation.
     /// </returns>
     private async Task<Task> ProcessSensorReading(TempSensorReading tempSensorReading, string sensorName,
-        IInfluxRepo influxRepo)
+        ITimeDataRepo timeDataRepo)
     {
         if (tempSensorReading.Value == null)
         {
@@ -297,7 +297,7 @@ public class Connection : IConnection
                         && (tempSensorReading.Meta is null || (tempSensorReading.Meta.Value is null &&
                                                                tempSensorReading.Meta.Timestamp is null &&
                                                                tempSensorReading.Meta.Sequence is null)):
-                await influxRepo.WriteSensorData(
+                await timeDataRepo.WriteSensorData(
                     tempSensorReading.Value[0] ?? 0,
                     sensorName,
                     tempSensorReading.Timestamp,
@@ -323,12 +323,12 @@ public class Connection : IConnection
     /// </summary>
     /// <param name="tempSensorReading">The temperature sensor reading to process in batch.</param>
     /// <param name="sensorName">The name of the sensor that produced the reading.</param>
-    /// <param name="influxRepo">The InfluxDB repository used to persist the batch of readings.</param>
+    /// <param name="timeDataRepo">The InfluxDB repository used to persist the batch of readings.</param>
     /// <returns>
     ///     A task that represents the asynchronous batch processing operation.
     /// </returns>
     private async Task<Task> ProcessBatchSensorReading(TempSensorReading tempSensorReading, string sensorName,
-        IInfluxRepo influxRepo)
+        ITimeDataRepo timeDataRepo)
     {
         if (tempSensorReading is { Sequence: not null, Meta: null, Value: not null, Value.Length: > 0 })
         {
@@ -361,7 +361,7 @@ public class Connection : IConnection
                         Sequence = tempDataMeta.Sequence[value],
                         Meta = null
                     };
-                    await ProcessSensorReading(tempData, sensorName, influxRepo);
+                    await ProcessSensorReading(tempData, sensorName, timeDataRepo);
                 });
         }
         else

@@ -36,90 +36,59 @@ services:
       - isopruefi-network
       - isopruefi-monitoring
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/ping"]
+      test: ["CMD-SHELL", "pg_isready -U Isopruefi"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
-  influxdb3:
-    image: influxdb:3.2.1-core
-    container_name: influxdb
-    restart: unless-stopped
-    ports:
-      - 8181:8181
-    command:
-      - influxdb3
-      - serve
-      - --node-id=node0
-      - --object-store=file
-      - --data-dir=/var/lib/influxdb3/data
-      - --plugin-dir=/var/lib/influxdb3/plugins
-    volumes:
-      - type: bind
-        source: ./isopruefi-docker/influx/influxdb3/data
-        # Path to store data in the container
-        target: /var/lib/influxdb3/data
-      - type: bind
-        # Path to store plugins on your host system
-        source: ./isopruefi-docker/influx/influxdb3/plugins
-        # Path to store plugins in the container
-        target: /var/lib/influxdb3/plugins
-      # - ./influx/bootstrap.sh:/docker-entrypoint-initdb.d/bootstrap.sh:ro
-    networks:
-      - isopruefi-network
-    healthcheck:
-      test: ["CMD", "curl", "http://localhost:8181/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
-  influxdb-explorer:
-    image: influxdata/influxdb3-ui:1.0.3
-    container_name: influx-explorer
-    restart: unless-stopped
-    ports:
-      - 8888:80
-      - 8889:8888
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.explorer.rule=Host(`explorer.localhost`)"
-      - "traefik.http.routers.explorer.entrypoints=websecure"
-      - "traefik.http.routers.explorer.tls=true"
-      - traefik.http.services.explorer.loadbalancer.server.port=80
-    command:
-      - "--mode=admin"
-    volumes:
-      - "./isopruefi-docker/influx/explorer/db:/db:rw"
-      - "./isopruefi-docker/influx/explorer/config:/app-root/config:ro"
-    networks:
-      - isopruefi-network
-    depends_on:
-      - influxdb3
-      - traefik
-
-  postgres:
+ 
+  postgres-1:
     image: postgres:alpine3.21
-    container_name: postgres
+    container_name: postgres-1
     restart: unless-stopped
-    ports:
-      - 5432:5432
     volumes:
-      - ./isopruefi-docker/postgres:/var/lib/postgresql/data
+      - postgres-1:/var/lib/postgresql/data
     networks:
       - isopruefi-network
-    environment:
-      - POSTGRES_PASSWORD=secret
-      - POSTGRES_USER=Isopruefi
-      - POSTGRES_DB=Isopruefi
+    env_file:
+      - ./secrets.env
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U Isopruefi"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
+  postgres-2:
+    image: postgres:alpine3.21
+    container_name: postgres-2
+    restart: unless-stopped
+    volumes:
+      - postgres-2:/var/lib/postgresql/data
+    networks:
+      - isopruefi-network
+    env_file:
+      - ./secrets.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U Isopruefi"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+  pgpool:
+    build: ./pgpool
+    container_name: pgpool
+    depends_on:
+      - postgres-1
+      - postgres-2
+    ports:
+      - "9999:9999"
+    networks:
+      - isopruefi-network
+    env_file:
+      - ./secrets.env
+  
   loki:
     image: grafana/loki:3.5.2
     container_name: loki
@@ -205,7 +174,7 @@ services:
     depends_on:
       - loki
       - alloy
-      - influxdb3
+
 
   isopruefi-frontend-1:
     build:
@@ -246,8 +215,7 @@ services:
     env_file:
       - ./secrets.env
     depends_on:
-      - influxdb3
-      - postgres
+      - pgpool
 
   isopruefi-mqtt-receiver-1:
     build:
@@ -261,8 +229,7 @@ services:
     env_file:
       - ./secrets.env
     depends_on:
-      - influxdb3
-      - postgres
+      - pgpool
 
   isopruefi-get-weather-worker-1:
     build:
@@ -279,5 +246,10 @@ services:
     env_file:
       - ./secrets.env
     depends_on:
-      - influxdb3
-      - postgres
+      - pgpool
+
+volumes:
+    postgres-1:
+    postgres-2:
+    
+     

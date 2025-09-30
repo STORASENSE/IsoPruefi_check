@@ -14,7 +14,7 @@ public class MqttHealthCheck : IHealthCheck
     private readonly IConnection _connection;
 
     /// <summary>
-    ///     Initializes a new instance of the <see cref="MqttHealthCheck"/> class.
+    ///     Initializes a new instance of the <see cref="MqttHealthCheck" /> class.
     /// </summary>
     /// <param name="connection">Connection used to determine health status</param>
     /// <exception cref="ArgumentNullException">Thrown if connection is null</exception>

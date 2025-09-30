@@ -1,9 +1,8 @@
 using System.Net;
 using Database.EntityFramework;
 using Database.Repository.CoordinateRepo;
-using Database.Repository.InfluxRepo;
-using Database.Repository.InfluxRepo.Influx;
 using Database.Repository.SettingsRepo;
+using Database.Repository.TimeDataRepo;
 using Get_weatherData_worker.Helper;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
@@ -27,7 +26,7 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddScoped<ISettingsRepo, SettingsRepo>();
-        builder.Services.AddScoped<IInfluxRepo, InfluxRepo>();
+        builder.Services.AddScoped<ITimeDataRepo, TimeDataRepo>();
         builder.Services.AddScoped<ICoordinateRepo, CoordinateRepo>();
 
         // Register Database with proper DbContext

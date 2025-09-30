@@ -13,15 +13,15 @@ import { BrowserRouter } from "react-router-dom";
 async function start() {
     try {
         // Determine config path based on environment
-        const configPath = import.meta.env.PROD ? '/frontend/config.json' : '/config.json';
+        const configPath = '/config.json';
         const res = await fetch(configPath, {cache: "no-store"});
         (window as any).__APP_CONFIG__ = res.ok ? await res.json() : {};
     } catch {
         (window as any).__APP_CONFIG__ = {};
     }
 
-    // Determine base path based on environment
-    const basename = import.meta.env.PROD ? '/frontend' : '';
+    // Remove basename since we're serving directly from frontend.localhost
+    const basename = '';
 
     ReactDOM.createRoot(document.getElementById("root")!).render(
         <React.StrictMode>

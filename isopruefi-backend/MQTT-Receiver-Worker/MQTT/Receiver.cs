@@ -16,21 +16,21 @@ public class Receiver : IReceiver
     ///     Configuration for retrieving settings.
     /// </summary>
     private readonly IConfiguration _configuration;
-    
-    /// <summary>
-    ///     Service provider for accessing the application's services.
-    /// </summary>
-    private readonly IServiceProvider _serviceProvider;
-    
+
     /// <summary>
     ///     Connection instance for receiving messages.
     /// </summary>
     private readonly IConnection _connection;
-    
+
     /// <summary>
     ///     Logger instance for documenting diagnostics.
     /// </summary>
     private readonly ILogger<Receiver> _logger;
+
+    /// <summary>
+    ///     Service provider for accessing the application's services.
+    /// </summary>
+    private readonly IServiceProvider _serviceProvider;
 
     /// <summary>
     ///     Initializes a new instance of the <see cref="Receiver" /> class.

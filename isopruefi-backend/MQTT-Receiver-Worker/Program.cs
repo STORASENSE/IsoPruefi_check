@@ -1,8 +1,7 @@
 using System.Net;
 using Database.EntityFramework;
-using Database.Repository.InfluxRepo;
-using Database.Repository.InfluxRepo.InfluxCache;
 using Database.Repository.SettingsRepo;
+using Database.Repository.TimeDataRepo;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -29,8 +28,8 @@ public class Program
         builder.Services.AddMemoryCache();
 
         // Register Repos
-        builder.Services.AddScoped<CachedInfluxRepo>();
-        builder.Services.AddScoped<IInfluxRepo>(provider => provider.GetRequiredService<CachedInfluxRepo>());
+
+        builder.Services.AddScoped<ITimeDataRepo, TimeDataRepo>();
         builder.Services.AddScoped<ISettingsRepo, SettingsRepo>();
         // Register Database with proper DbContext
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -49,7 +48,6 @@ public class Program
         else if (builder.Environment.IsEnvironment("Docker")) builder.Configuration.AddEnvironmentVariables();
 
         builder.Services.AddHostedService<Worker>();
-        builder.Services.AddHostedService<InfluxRetryService>();
 
         var app = builder.Build();
 

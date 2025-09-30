@@ -1,7 +1,7 @@
 namespace Rest_API.Services.Temp;
 
 /// <summary>
-/// Interface for accessing all temperature related functions.
+///     Interface for accessing all temperature related functions.
 /// </summary>
 public interface ITempService
 {

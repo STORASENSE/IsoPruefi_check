@@ -1,7 +1,6 @@
 using Database.EntityFramework;
-using Database.Repository.InfluxRepo;
-using Database.Repository.InfluxRepo.InfluxCache;
 using Database.Repository.SettingsRepo;
+using Database.Repository.TimeDataRepo;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.Hosting;
@@ -22,17 +21,13 @@ namespace LoadTests.Infrastructure;
 public class LoadTestMqttFactory : WebApplicationFactory<Program>
 {
     private readonly string _connectionString;
-    private readonly string _influxDbHost;
-    private readonly string _influxDbToken;
     private readonly IContainer _mosquittoContainer;
 
     /// <summary>
     ///     Initializes a new instance of the LoadTestMqttFactory
     /// </summary>
     /// <param name="dbConnectionString">Database connection string</param>
-    /// <param name="influxDbToken">InfluxDB authentication token</param>
-    /// <param name="influxDbHost">InfluxDB host URL</param>
-    public LoadTestMqttFactory(string dbConnectionString, string influxDbToken, string influxDbHost)
+    public LoadTestMqttFactory(string dbConnectionString)
     {
         _mosquittoContainer = new ContainerBuilder()
             .WithImage("eclipse-mosquitto")
@@ -46,8 +41,6 @@ public class LoadTestMqttFactory : WebApplicationFactory<Program>
             .Build();
 
         _connectionString = dbConnectionString;
-        _influxDbToken = influxDbToken;
-        _influxDbHost = influxDbHost;
     }
 
     /// <summary>
@@ -84,8 +77,6 @@ public class LoadTestMqttFactory : WebApplicationFactory<Program>
                 ["MQTT:BrokerHost"] = "localhost",
                 ["MQTT:BrokerPort"] = MqttPort.ToString(),
                 ["ConnectionStrings:DefaultConnection"] = _connectionString,
-                ["Influx:InfluxDBHost"] = _influxDbHost,
-                ["Influx:InfluxDBToken"] = _influxDbToken,
                 ["DOTNET_ENVIRONMENT"] = "Docker"
             });
         });
@@ -108,14 +99,12 @@ public class LoadTestMqttFactory : WebApplicationFactory<Program>
 
             // Register required services for load testing
             services.AddMemoryCache();
-            services.AddScoped<CachedInfluxRepo>();
-            services.AddScoped<IInfluxRepo>(provider => provider.GetRequiredService<CachedInfluxRepo>());
+            services.AddScoped<ITimeDataRepo, TimeDataRepo>();
             services.AddScoped<ISettingsRepo, SettingsRepo>();
             services.AddSingleton<IReceiver, Receiver>();
             services.AddSingleton<IConnection, Connection>();
 
             services.AddHostedService<Worker>();
-            services.AddHostedService<InfluxRetryService>();
         });
 
         // Disable HTTPS redirection for load tests

@@ -48,11 +48,8 @@ public abstract class LoadTestBase
         await SensorSeeder.SeedTestDataAsync(ApiFactory.Services);
         await SensorSeeder.CheckSensorExistsAsync(ApiFactory.Services, 10);
 
-        await InfluxSeeder.CreateIsoPrüfiDatabase(ApiFactory.Services);
-        await InfluxSeeder.CheckDatabaseExists(ApiFactory.Services);
 
-        MqttFactory = new LoadTestMqttFactory(ApiFactory.DatabaseConnectionString, ApiFactory.InfluxDbToken,
-            ApiFactory.InfluxDbUrl);
+        MqttFactory = new LoadTestMqttFactory(ApiFactory.DatabaseConnectionString);
         await MqttFactory.InitializeAsync();
 
         // Create HTTP client from factory

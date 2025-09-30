@@ -9,7 +9,7 @@ public class WeatherData
     ///     Temperature of the weather data.
     /// </summary>
     public double Temperature { get; set; }
-    
+
     /// <summary>
     ///     Time of the measurement.
     /// </summary>

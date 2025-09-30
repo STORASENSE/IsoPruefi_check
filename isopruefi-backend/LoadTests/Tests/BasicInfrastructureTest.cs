@@ -22,9 +22,7 @@ public class BasicInfrastructureTest : LoadTestBase
         Assert.That(ApiFactory.DatabaseConnectionString, Is.Not.Empty,
             "Database connection string should not be empty");
 
-        // Test InfluxDB setup
-        Assert.That(ApiFactory.InfluxDbUrl, Is.Not.Empty, "InfluxDB URL should not be empty");
-        Assert.That(ApiFactory.InfluxDbToken, Is.Not.Empty, "InfluxDB token should not be empty");
+        // Test PostgreSQL setup (database connection string is already tested above)
 
         // Test MQTT setup
         Assert.That(MqttFactory.MqttPort, Is.GreaterThan(0), "MQTT port should be set");
