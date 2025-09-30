@@ -1,20 +1,30 @@
 ﻿# Use .NET 9 SDK for building and running with hot reload
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS dev
 
+# Create a non-root user for development (SDK images don't have app user by default)
+RUN groupadd --gid 1000 devuser && \
+    useradd --uid 1000 --gid devuser --shell /bin/bash --create-home devuser
+
+# Set working directory and create with proper ownership
+RUN mkdir -p /src && \
+    chown -R devuser:devuser /src
+
+# Switch to non-root user
+USER devuser
+
 # Set working directory
 WORKDIR /src
 
-# Copy project file and restore dependencies
-#COPY ["IsoPruefi-Backend.sln", "./"]
-COPY ["Get-weatherData-worker/Get-weatherData-worker.csproj", "Get-wheatherData-worker/"]
-COPY ["Database/Database.csproj", "Database/"]
-COPY . .
+# Copy project files with correct ownership
+COPY --chown=devuser:devuser ["Get-weatherData-worker/Get-weatherData-worker.csproj", "Get-weatherData-worker/"]
+COPY --chown=devuser:devuser ["Database/Database.csproj", "Database/"]
+
+# Restore dependencies as non-root user
 RUN dotnet restore "Get-weatherData-worker/Get-weatherData-worker.csproj"
 RUN dotnet restore "Database/Database.csproj"
 
-# Set working directory to project directory
-#WORKDIR "/src/MQTT-Receiver-Worker"
+# Copy remaining source files
+COPY --chown=devuser:devuser . .
 
 # Run the app with hot reload
 ENTRYPOINT ["dotnet", "run", "--project", "Get-weatherData-worker/Get-weatherData-worker.csproj"]
-
